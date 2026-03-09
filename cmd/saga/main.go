@@ -37,5 +37,6 @@ func printUsage(w io.Writer) {
 	fmt.Fprintln(w, "usage: saga <command>")
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "commands:")
+	fmt.Fprintln(w, "  help      show this help message")
 	fmt.Fprintln(w, "  version   print build information")
 }
