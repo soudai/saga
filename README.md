@@ -138,6 +138,31 @@ Query it from another terminal:
 
 On a fresh database, `status` usually reports zero tasks until tasks are inserted through code or future higher-level orchestration commands.
 
+To register a task today, insert it directly into the SQLite database created by the daemon:
+
+```bash
+DB_PATH=/tmp/saga/state/saga.db
+
+sqlite3 "$DB_PATH" <<'SQL'
+INSERT INTO tasks (repository, issue_number, state, created_at, updated_at)
+VALUES (
+  'soudai/saga',
+  123,
+  'queued',
+  strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+);
+SQL
+```
+
+Then confirm it from another terminal:
+
+```bash
+./bin/saga status --config ./saga.local.yaml
+```
+
+This is a temporary workflow until a dedicated enqueue command is added.
+
 ## Implemented building blocks
 
 These packages are already present on `main` and covered by tests:

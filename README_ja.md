@@ -138,6 +138,31 @@ log:
 
 新規 database では、コードまたは将来の上位 orchestration コマンドで task が投入されるまでは `status` が 0 task を返すのが通常です。
 
+現時点で task を実際に登録するには、daemon が作成した SQLite database に直接 insert します。
+
+```bash
+DB_PATH=/tmp/saga/state/saga.db
+
+sqlite3 "$DB_PATH" <<'SQL'
+INSERT INTO tasks (repository, issue_number, state, created_at, updated_at)
+VALUES (
+  'soudai/saga',
+  123,
+  'queued',
+  strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+);
+SQL
+```
+
+その後、別ターミナルから確認します。
+
+```bash
+./bin/saga status --config ./saga.local.yaml
+```
+
+これは専用の `enqueue` コマンドが入るまでの暫定手順です。
+
 ## 実装済み building block
 
 `main` には次の package 実装が入り、テストもあります。
