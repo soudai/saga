@@ -1,31 +1,75 @@
 # Saga
 
-Saga is a Go-based AI agent framework intended to run as a long-lived daemon on Linux or WSL2 and eventually automate GitHub-driven development workflows with Codex-powered subagents.
+Saga is a Go-based AI agent framework for long-running local orchestration on Linux and WSL2. The long-term goal is fully automated GitHub-driven development with Codex-powered subagents. The current `main` branch already includes the local daemon, SQLite-backed control plane, workflow-related libraries, GitHub integration helpers, systemd assets, and release packaging helpers.
 
-## Current status
+## Current scope
 
-The repository currently contains the Phase 0-1 baseline:
+What is end-to-end on `main`:
 
-- Go module, project layout, and build/test entrypoints
-- CLI commands: `saga version`, `saga doctor`, and `saga serve`
-- YAML config loading with environment variable overrides
-- Validation for absolute runtime paths and socket path
-- Structured logging via `slog`
-- Daemon skeleton with systemd readiness notification when available
+- CLI commands for `version`, `doctor`, `serve`, `status`, `cancel`, `retry`, and `resume`
+- A local daemon that opens a Unix socket control plane
+- SQLite-backed task/run/lease storage
+- Local status reporting and task state updates through the control API
+- Config loading, validation, structured logging, and systemd readiness notification
+- systemd unit generation helpers, sample configs, smoke-test docs, and a release packaging script
 
-The later phases described in [`docs/execution/`](./docs/execution/) are still documentation and execution plans. GitHub automation, workflow execution, SQLite state management, and worktree orchestration are not on `main` yet.
+What is implemented as tested packages but not yet wired into a full autonomous daemon loop:
 
-## What works today
+- Codex runner and artifact storage
+- Git worktree manager
+- Workflow parser and execution engine
+- GitHub issue client and selector
+- Recovery policy and reconciliation helpers
 
-### CLI
+## Available commands
 
-- `saga version` prints build metadata
-- `saga doctor` validates the loaded configuration and reports basic runtime checks
-- `saga serve` loads config, creates runtime directories, initializes logging, and waits as a long-running daemon process
+```bash
+saga version
+saga doctor --config /path/to/config.yaml
+saga serve --config /path/to/config.yaml
+saga status --config /path/to/config.yaml
+saga cancel <task-id> --config /path/to/config.yaml
+saga retry <task-id> --config /path/to/config.yaml
+saga resume <task-id> --config /path/to/config.yaml
+```
 
-### Configuration
+Notes:
 
-Saga loads configuration from a YAML file and then applies environment overrides:
+- `saga serve` runs in the foreground until it receives `SIGINT` or `SIGTERM`
+- `saga status` and task actions talk to the daemon over the configured Unix socket
+- there is no `enqueue` CLI on `main` yet, so task creation is still package-level rather than a user-facing command
+
+## Runtime architecture
+
+Current runtime behavior:
+
+- Creates runtime directories for state, run files, logs, and the socket parent directory
+- Creates and uses a SQLite database under the configured state directory
+- Serves a local HTTP control API over a Unix domain socket
+- Restricts the socket file to local access
+- Logs startup and shutdown with `slog`
+- Sends `READY=1` to systemd when `NOTIFY_SOCKET` is available
+
+Control plane endpoints currently exposed by the daemon:
+
+- `GET /status`
+- `POST /tasks/{id}/cancel`
+- `POST /tasks/{id}/retry`
+- `POST /tasks/{id}/resume`
+
+## Configuration
+
+Saga loads a YAML config file and then applies environment variable overrides.
+
+Config fields:
+
+- `runtime.state_dir`
+- `runtime.run_dir`
+- `runtime.log_dir`
+- `server.socket_path`
+- `log.level`
+
+Environment overrides:
 
 - `SAGA_STATE_DIR`
 - `SAGA_RUN_DIR`
@@ -35,18 +79,10 @@ Saga loads configuration from a YAML file and then applies environment overrides
 
 All runtime paths must be absolute.
 
-### Runtime behavior
+Sample configs are available in:
 
-- Creates runtime directories for state, run files, logs, and the socket parent directory
-- Logs startup and shutdown events
-- Sends `READY=1` through systemd notify when the environment supports it
-- Continues running even if systemd notification is unavailable
-
-## Requirements
-
-- Go `1.26`
-- Linux or WSL2 recommended
-- `systemd` is optional for the current implementation, but it is the target deployment model
+- [`config/samples/minimal.config.yaml`](./config/samples/minimal.config.yaml)
+- [`config/samples/production.config.yaml`](./config/samples/production.config.yaml)
 
 ## Quick start
 
@@ -56,57 +92,83 @@ Build the binary:
 make build
 ```
 
-Create a local config for non-root testing:
+Create a local config such as `./saga.local.yaml`:
 
 ```yaml
 runtime:
   state_dir: /tmp/saga/state
   run_dir: /tmp/saga/run
   log_dir: /tmp/saga/log
+
 server:
   socket_path: /tmp/saga/run/saga.sock
+
 log:
   level: info
 ```
 
-Run the available commands:
+Run the daemon in one terminal:
 
 ```bash
-./bin/saga version
-./bin/saga doctor --config ./saga.local.yaml
 ./bin/saga serve --config ./saga.local.yaml
 ```
 
-`saga serve` runs in the foreground until it receives `SIGINT` or `SIGTERM`.
+Query it from another terminal:
+
+```bash
+./bin/saga doctor --config ./saga.local.yaml
+./bin/saga status --config ./saga.local.yaml
+```
+
+On a fresh database, `status` usually reports zero tasks until tasks are inserted through code or future higher-level orchestration commands.
+
+## Implemented building blocks
+
+These packages are already present on `main` and covered by tests:
+
+- SQLite store and lease control in [`internal/store/`](./internal/store)
+- Unix socket control client/server in [`internal/control/`](./internal/control)
+- Codex execution and artifact persistence in [`internal/codex/`](./internal/codex) and [`internal/artifact/`](./internal/artifact)
+- Git worktree management in [`internal/gitops/`](./internal/gitops)
+- Workflow parsing and execution in [`internal/workflow/`](./internal/workflow)
+- GitHub issue listing and selector logic in [`internal/github/`](./internal/github)
+- Recovery policies in [`internal/recovery/`](./internal/recovery)
+- systemd unit helpers in [`internal/systemd/`](./internal/systemd)
 
 ## Development
+
+Requirements:
+
+- Go `1.26`
+- Linux or WSL2 recommended
+
+Useful commands:
 
 ```bash
 make fmt
 make test
+./ci/test.sh
+./ci/release.sh v0.1.0
 ```
 
-The CI helper script is available at [`ci/test.sh`](./ci/test.sh).
+The release script builds a distributable tarball under `dist/`.
 
-## Roadmap
+## Operations
 
-The planned implementation is organized into phases:
+Relevant operational assets:
 
-- Phase 0: Repository bootstrap
-- Phase 1: Runtime foundation
-- Phase 2: State and control plane
-- Phase 3: Codex execution layer
-- Phase 4: Git worktree layer
-- Phase 5: Workflow engine
-- Phase 6: GitHub automation
-- Phase 7: Validation and recovery
-- Phase 8: systemd hardening
-- Phase 9: Release readiness
+- systemd service template: [`contrib/systemd/saga.service`](./contrib/systemd/saga.service)
+- systemd/WSL2 notes: [`docs/systemd-wsl2.md`](./docs/systemd-wsl2.md)
+- smoke test: [`docs/testing/smoke-test.md`](./docs/testing/smoke-test.md)
 
-See the following documents for the design and execution plan:
+## Roadmap and design docs
+
+The implementation plan is documented phase by phase under [`docs/execution/`](./docs/execution/).
+
+Key references:
 
 - [`docs/README.md`](./docs/README.md)
 - [`docs/requirements.md`](./docs/requirements.md)
 - [`docs/architecture.md`](./docs/architecture.md)
+- [`docs/github-integration.md`](./docs/github-integration.md)
 - [`docs/implementation-plan.md`](./docs/implementation-plan.md)
-- [`docs/systemd-wsl2.md`](./docs/systemd-wsl2.md)

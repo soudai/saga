@@ -1,31 +1,75 @@
 # Saga
 
-Saga は、Linux / WSL2 上で常駐 daemon として動作し、将来的には Codex を使ったサブエージェント実行と GitHub 連携の自動開発フローを実現することを目指した Go 製の AI agent framework です。
+Saga は、Linux / WSL2 上でローカル常駐 orchestration を行う Go 製 AI agent framework です。最終的には Codex を使ったサブエージェントと GitHub 連携により、Issue 起点の自動開発フローを実現することを目指しています。現在の `main` には、ローカル daemon、SQLite ベースの control plane、workflow 関連ライブラリ、GitHub 連携ヘルパー、systemd 用 assets、release packaging 補助まで入っています。
 
-## 現在の状態
+## 現在のスコープ
 
-現在の `main` に入っているのは Phase 0-1 の基盤部分です。
+`main` で end-to-end に動くもの:
 
-- Go module、基本ディレクトリ構成、build/test エントリポイント
-- CLI コマンド: `saga version`、`saga doctor`、`saga serve`
-- YAML config 読み込みと環境変数 override
-- runtime path / socket path の絶対パス validation
-- `slog` による構造化 logging
-- systemd readiness notify に対応した daemon skeleton
+- `version` / `doctor` / `serve` / `status` / `cancel` / `retry` / `resume` の CLI
+- Unix socket 上で動くローカル daemon
+- SQLite ベースの task / run / lease 保存
+- control API 経由の status 取得と task state 更新
+- config 読み込み、validation、構造化 logging、systemd readiness notify
+- systemd unit 生成ヘルパー、sample config、smoke test ドキュメント、release packaging script
 
-[`docs/execution/`](./docs/execution/) に書かれている後続 phase は、現時点では実装ではなく計画ドキュメントです。GitHub 自動化、workflow 実行、SQLite による状態管理、worktree orchestration はまだ `main` には入っていません。
+テスト済みの package としては存在するが、まだ完全自律 daemon loop には接続されていないもの:
 
-## 現在できること
+- Codex runner と artifact 保存
+- Git worktree manager
+- Workflow parser / execution engine
+- GitHub issue client / selector
+- Recovery policy / reconciliation helper
 
-### CLI
+## 利用可能なコマンド
 
-- `saga version` で build metadata を表示する
-- `saga doctor` で読み込んだ設定と基本 runtime 条件を確認する
-- `saga serve` で config を読み込み、runtime directory を作成し、長時間動作する daemon process として待機する
+```bash
+saga version
+saga doctor --config /path/to/config.yaml
+saga serve --config /path/to/config.yaml
+saga status --config /path/to/config.yaml
+saga cancel <task-id> --config /path/to/config.yaml
+saga retry <task-id> --config /path/to/config.yaml
+saga resume <task-id> --config /path/to/config.yaml
+```
 
-### 設定
+補足:
 
-Saga は YAML ファイルを読み込み、その後で次の環境変数 override を適用します。
+- `saga serve` は `SIGINT` または `SIGTERM` を受けるまで foreground で動作します
+- `saga status` と task action は設定された Unix socket 経由で daemon に接続します
+- 現在の `main` には `enqueue` CLI はまだなく、task 作成は package レベルの処理です
+
+## ランタイム構成
+
+現在の runtime 挙動:
+
+- state、run file、log、socket 親ディレクトリを作成する
+- 設定された state directory 配下に SQLite database を作成して利用する
+- Unix domain socket 上でローカル HTTP control API を公開する
+- socket file はローカル利用向けの権限に制限する
+- `slog` で起動と停止を記録する
+- `NOTIFY_SOCKET` があれば systemd に `READY=1` を送る
+
+現在 daemon が公開している control plane endpoint:
+
+- `GET /status`
+- `POST /tasks/{id}/cancel`
+- `POST /tasks/{id}/retry`
+- `POST /tasks/{id}/resume`
+
+## 設定
+
+Saga は YAML config を読み込み、その後で環境変数 override を適用します。
+
+設定項目:
+
+- `runtime.state_dir`
+- `runtime.run_dir`
+- `runtime.log_dir`
+- `server.socket_path`
+- `log.level`
+
+環境変数 override:
 
 - `SAGA_STATE_DIR`
 - `SAGA_RUN_DIR`
@@ -35,78 +79,96 @@ Saga は YAML ファイルを読み込み、その後で次の環境変数 overr
 
 runtime path はすべて絶対パスである必要があります。
 
-### 実行時挙動
+sample config:
 
-- state、run file、log、socket 親ディレクトリを作成する
-- 起動時と終了時に log を出力する
-- 環境が対応していれば systemd notify で `READY=1` を送る
-- systemd notify が使えなくても継続動作する
-
-## 必要要件
-
-- Go `1.26`
-- Linux または WSL2 推奨
-- 現状実装では `systemd` は必須ではないが、運用ターゲットは `systemd` 前提
+- [`config/samples/minimal.config.yaml`](./config/samples/minimal.config.yaml)
+- [`config/samples/production.config.yaml`](./config/samples/production.config.yaml)
 
 ## クイックスタート
 
-まず binary を build します。
+binary を build します。
 
 ```bash
 make build
 ```
 
-root 権限なしで試すためのローカル config 例です。
+`./saga.local.yaml` の例:
 
 ```yaml
 runtime:
   state_dir: /tmp/saga/state
   run_dir: /tmp/saga/run
   log_dir: /tmp/saga/log
+
 server:
   socket_path: /tmp/saga/run/saga.sock
+
 log:
   level: info
 ```
 
-利用可能なコマンドは次のとおりです。
+1 つ目のターミナルで daemon を起動します。
 
 ```bash
-./bin/saga version
-./bin/saga doctor --config ./saga.local.yaml
 ./bin/saga serve --config ./saga.local.yaml
 ```
 
-`saga serve` は `SIGINT` または `SIGTERM` を受けるまで foreground で動作します。
+別ターミナルから確認します。
+
+```bash
+./bin/saga doctor --config ./saga.local.yaml
+./bin/saga status --config ./saga.local.yaml
+```
+
+新規 database では、コードまたは将来の上位 orchestration コマンドで task が投入されるまでは `status` が 0 task を返すのが通常です。
+
+## 実装済み building block
+
+`main` には次の package 実装が入り、テストもあります。
+
+- SQLite store と lease 制御: [`internal/store/`](./internal/store)
+- Unix socket control client/server: [`internal/control/`](./internal/control)
+- Codex 実行と artifact 永続化: [`internal/codex/`](./internal/codex), [`internal/artifact/`](./internal/artifact)
+- Git worktree 管理: [`internal/gitops/`](./internal/gitops)
+- Workflow parse / execution: [`internal/workflow/`](./internal/workflow)
+- GitHub issue 一覧取得と selector: [`internal/github/`](./internal/github)
+- Recovery policy: [`internal/recovery/`](./internal/recovery)
+- systemd unit helper: [`internal/systemd/`](./internal/systemd)
 
 ## 開発
+
+必要要件:
+
+- Go `1.26`
+- Linux または WSL2 推奨
+
+主なコマンド:
 
 ```bash
 make fmt
 make test
+./ci/test.sh
+./ci/release.sh v0.1.0
 ```
 
-CI 用の補助スクリプトは [`ci/test.sh`](./ci/test.sh) にあります。
+release script は `dist/` 配下に配布用 tarball を生成します。
 
-## ロードマップ
+## 運用関連
 
-実装計画は次の phase に分かれています。
+関連ファイル:
 
-- Phase 0: Repository bootstrap
-- Phase 1: Runtime foundation
-- Phase 2: State and control plane
-- Phase 3: Codex execution layer
-- Phase 4: Git worktree layer
-- Phase 5: Workflow engine
-- Phase 6: GitHub automation
-- Phase 7: Validation and recovery
-- Phase 8: systemd hardening
-- Phase 9: Release readiness
+- systemd service template: [`contrib/systemd/saga.service`](./contrib/systemd/saga.service)
+- systemd / WSL2 メモ: [`docs/systemd-wsl2.md`](./docs/systemd-wsl2.md)
+- smoke test: [`docs/testing/smoke-test.md`](./docs/testing/smoke-test.md)
 
-設計と実装計画は次のドキュメントを参照してください。
+## ロードマップと設計資料
+
+フェーズごとの実装計画は [`docs/execution/`](./docs/execution/) にあります。
+
+主要ドキュメント:
 
 - [`docs/README.md`](./docs/README.md)
 - [`docs/requirements.md`](./docs/requirements.md)
 - [`docs/architecture.md`](./docs/architecture.md)
+- [`docs/github-integration.md`](./docs/github-integration.md)
 - [`docs/implementation-plan.md`](./docs/implementation-plan.md)
-- [`docs/systemd-wsl2.md`](./docs/systemd-wsl2.md)
