@@ -76,7 +76,7 @@ func (s *Server) Serve(ctx context.Context) error {
 
 	s.logger.Info("starting saga daemon", "socket_path", s.paths.SocketPath)
 	if err := s.notifier.Ready(); err != nil {
-		return err
+		s.logger.Warn("failed to notify readiness; continuing without systemd notification", "error", err)
 	}
 
 	<-ctx.Done()
