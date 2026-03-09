@@ -7,12 +7,21 @@ type Notifier interface {
 }
 
 type notifier struct{}
+type noopNotifier struct{}
 
 func New() Notifier {
 	return notifier{}
 }
 
+func NewNoop() Notifier {
+	return noopNotifier{}
+}
+
 func (notifier) Ready() error {
 	_, err := daemon.SdNotify(false, daemon.SdNotifyReady)
 	return err
+}
+
+func (noopNotifier) Ready() error {
+	return nil
 }

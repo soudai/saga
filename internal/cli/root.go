@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"io"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"github.com/spf13/cobra"
 
 	"github.com/soudai/saga/internal/config"
+	"github.com/soudai/saga/internal/control"
 	"github.com/soudai/saga/internal/daemon"
 	"github.com/soudai/saga/internal/doctor"
 	"github.com/soudai/saga/internal/logging"
@@ -35,6 +37,10 @@ func NewRootCommand(stdout, stderr io.Writer) *cobra.Command {
 	cmd.AddCommand(newVersionCommand(stdout))
 	cmd.AddCommand(newDoctorCommand(stdout, stderr, &configPath))
 	cmd.AddCommand(newServeCommand(stdout, stderr, &configPath))
+	cmd.AddCommand(newStatusCommand(stdout, &configPath))
+	cmd.AddCommand(newTaskActionCommand("cancel", "Cancel a task", &configPath))
+	cmd.AddCommand(newTaskActionCommand("retry", "Retry a task", &configPath))
+	cmd.AddCommand(newTaskActionCommand("resume", "Resume a task", &configPath))
 	return cmd
 }
 
@@ -96,6 +102,65 @@ func newServeCommand(stdout, stderr io.Writer, configPath *string) *cobra.Comman
 			defer stop()
 
 			return server.Serve(ctx)
+		},
+	}
+}
+
+func newStatusCommand(stdout io.Writer, configPath *string) *cobra.Command {
+	return &cobra.Command{
+		Use:   "status",
+		Short: "Show daemon status",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := config.Load(*configPath)
+			if err != nil {
+				return err
+			}
+
+			status, err := control.NewClient(cfg.Server.SocketPath).Status(cmd.Context())
+			if err != nil {
+				return err
+			}
+
+			if _, err := fmt.Fprintf(stdout, "tasks=%d active_runs=%d\n", len(status.Tasks), status.ActiveRuns); err != nil {
+				return err
+			}
+			for _, task := range status.Tasks {
+				if _, err := fmt.Fprintf(stdout, "task id=%d repo=%s issue=%d state=%s\n", task.ID, task.Repository, task.IssueNumber, task.State); err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	}
+}
+
+func newTaskActionCommand(action, short string, configPath *string) *cobra.Command {
+	return &cobra.Command{
+		Use:   action + " <task-id>",
+		Short: short,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := config.Load(*configPath)
+			if err != nil {
+				return err
+			}
+
+			taskID, err := strconv.ParseInt(args[0], 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid task id: %w", err)
+			}
+
+			client := control.NewClient(cfg.Server.SocketPath)
+			switch action {
+			case "cancel":
+				return client.Cancel(cmd.Context(), taskID)
+			case "retry":
+				return client.Retry(cmd.Context(), taskID)
+			case "resume":
+				return client.Resume(cmd.Context(), taskID)
+			default:
+				return fmt.Errorf("unsupported action: %s", action)
+			}
 		},
 	}
 }
