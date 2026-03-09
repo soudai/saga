@@ -72,36 +72,41 @@ func TestTaskActions(t *testing.T) {
 func TestEnqueueTask(t *testing.T) {
 	t.Parallel()
 
-	dbPath := filepath.Join(t.TempDir(), "saga.db")
-	sqliteStore, err := sqlite.Open(dbPath)
-	if err != nil {
-		t.Fatalf("Open() error = %v", err)
-	}
-	defer func() {
-		_ = sqliteStore.Close()
-	}()
+	for _, path := range []string{"/tasks", "/tasks/"} {
+		path := path
+		t.Run(path, func(t *testing.T) {
+			dbPath := filepath.Join(t.TempDir(), "saga.db")
+			sqliteStore, err := sqlite.Open(dbPath)
+			if err != nil {
+				t.Fatalf("Open() error = %v", err)
+			}
+			defer func() {
+				_ = sqliteStore.Close()
+			}()
 
-	req := httptest.NewRequest(http.MethodPost, "/tasks", strings.NewReader(`{"repository":"soudai/saga","issue_number":123}`))
-	rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{"repository":"soudai/saga","issue_number":123}`))
+			rec := httptest.NewRecorder()
 
-	control.NewServer(sqliteStore).Handler().ServeHTTP(rec, req)
+			control.NewServer(sqliteStore).Handler().ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusCreated {
-		t.Fatalf("status code = %d, want 201", rec.Code)
-	}
+			if rec.Code != http.StatusCreated {
+				t.Fatalf("status code = %d, want 201", rec.Code)
+			}
 
-	var task store.Task
-	if err := json.Unmarshal(rec.Body.Bytes(), &task); err != nil {
-		t.Fatalf("Unmarshal() error = %v", err)
-	}
-	if task.Repository != "soudai/saga" {
-		t.Fatalf("repository = %q, want %q", task.Repository, "soudai/saga")
-	}
-	if task.IssueNumber != 123 {
-		t.Fatalf("issue number = %d, want 123", task.IssueNumber)
-	}
-	if task.State != store.TaskStateQueued {
-		t.Fatalf("state = %q, want %q", task.State, store.TaskStateQueued)
+			var task store.Task
+			if err := json.Unmarshal(rec.Body.Bytes(), &task); err != nil {
+				t.Fatalf("Unmarshal() error = %v", err)
+			}
+			if task.Repository != "soudai/saga" {
+				t.Fatalf("repository = %q, want %q", task.Repository, "soudai/saga")
+			}
+			if task.IssueNumber != 123 {
+				t.Fatalf("issue number = %d, want 123", task.IssueNumber)
+			}
+			if task.State != store.TaskStateQueued {
+				t.Fatalf("state = %q, want %q", task.State, store.TaskStateQueued)
+			}
+		})
 	}
 }
 

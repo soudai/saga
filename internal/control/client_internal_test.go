@@ -48,6 +48,35 @@ func TestClientEnqueue(t *testing.T) {
 	}
 }
 
+func TestClientEnqueueError(t *testing.T) {
+	t.Parallel()
+
+	dbPath := filepath.Join(t.TempDir(), "saga.db")
+	sqliteStore, err := sqlite.Open(dbPath)
+	if err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer func() {
+		_ = sqliteStore.Close()
+	}()
+
+	server := httptest.NewServer(NewServer(sqliteStore).Handler())
+	defer server.Close()
+
+	client, err := newTestClient(server)
+	if err != nil {
+		t.Fatalf("newTestClient() error = %v", err)
+	}
+
+	_, err = client.Enqueue(context.Background(), "", 123)
+	if err == nil {
+		t.Fatal("Enqueue() error = nil, want error")
+	}
+	if got := err.Error(); got != "enqueue request failed: repository is required" {
+		t.Fatalf("error = %q, want %q", got, "enqueue request failed: repository is required")
+	}
+}
+
 func newTestClient(server *httptest.Server) (*Client, error) {
 	baseURL, err := url.Parse(server.URL)
 	if err != nil {
@@ -71,8 +100,10 @@ type rewriteHostTransport struct {
 
 func (t rewriteHostTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	clone := req.Clone(req.Context())
-	clone.URL.Scheme = t.baseURL.Scheme
-	clone.URL.Host = t.baseURL.Host
+	urlCopy := *clone.URL
+	urlCopy.Scheme = t.baseURL.Scheme
+	urlCopy.Host = t.baseURL.Host
+	clone.URL = &urlCopy
 	clone.Host = t.baseURL.Host
 	return t.transport.RoundTrip(clone)
 }

@@ -60,7 +60,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/tasks" {
+	if r.URL.Path != "/tasks" && r.URL.Path != "/tasks/" {
 		writeError(w, http.StatusNotFound, errors.New("unknown route"))
 		return
 	}
@@ -93,6 +93,11 @@ func (s *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleTaskAction(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/tasks/" {
+		s.handleTasks(w, r)
+		return
+	}
+
 	parts := strings.Split(strings.Trim(strings.TrimPrefix(r.URL.Path, "/tasks/"), "/"), "/")
 	if len(parts) != 2 {
 		writeError(w, http.StatusNotFound, errors.New("unknown route"))
