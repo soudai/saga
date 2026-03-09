@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os/signal"
@@ -19,8 +18,6 @@ import (
 	"github.com/soudai/saga/internal/version"
 )
 
-var ErrPrinted = errors.New("message already written to output")
-
 func NewRootCommand(stdout, stderr io.Writer) *cobra.Command {
 	var configPath string
 
@@ -30,6 +27,8 @@ func NewRootCommand(stdout, stderr io.Writer) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
+	cmd.SetOut(stdout)
+	cmd.SetErr(stderr)
 
 	cmd.PersistentFlags().StringVar(&configPath, "config", "", "path to config file")
 

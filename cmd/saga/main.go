@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"io"
 	"os"
 
@@ -17,9 +16,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	cmd.SetArgs(args)
 
 	if err := cmd.Execute(); err != nil {
-		if !errors.Is(err, cli.ErrPrinted) {
-			_, _ = io.WriteString(stderr, err.Error()+"\n")
-		}
+		_, _ = io.WriteString(stderr, err.Error()+"\n")
 		return 1
 	}
 
