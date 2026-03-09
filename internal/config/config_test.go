@@ -72,3 +72,31 @@ func TestValidateRejectsRelativeRuntimeDirs(t *testing.T) {
 		t.Fatalf("Validate() error = %v, want absolute path error", err)
 	}
 }
+
+func TestMarshalRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	cfg := Default()
+	data, err := Marshal(cfg)
+	if err != nil {
+		t.Fatalf("Marshal() error = %v", err)
+	}
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	loaded, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if loaded.Server.SocketPath != cfg.Server.SocketPath {
+		t.Fatalf("loaded socket path = %q, want %q", loaded.Server.SocketPath, cfg.Server.SocketPath)
+	}
+	if loaded.Log.Level != cfg.Log.Level {
+		t.Fatalf("loaded log level = %q, want %q", loaded.Log.Level, cfg.Log.Level)
+	}
+}

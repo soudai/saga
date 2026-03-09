@@ -6,7 +6,7 @@ Saga is a Go-based AI agent framework for long-running local orchestration on Li
 
 What is end-to-end on `main`:
 
-- CLI commands for `version`, `doctor`, `serve`, `status`, `cancel`, `retry`, and `resume`
+- CLI commands for `init`, `version`, `doctor`, `serve`, `status`, `cancel`, `retry`, and `resume`
 - A local daemon that opens a Unix socket control plane
 - SQLite-backed task/run/lease storage
 - Local status reporting and task state updates through the control API
@@ -25,6 +25,7 @@ What is implemented as tested packages but not yet wired into a full autonomous 
 
 ```bash
 saga version
+saga init
 saga doctor --config /path/to/config.yaml
 saga serve --config /path/to/config.yaml
 saga status --config /path/to/config.yaml
@@ -35,6 +36,7 @@ saga resume <task-id> --config /path/to/config.yaml
 
 Notes:
 
+- `saga init` interactively creates a config file with project-local or system-wide defaults
 - `saga serve` runs in the foreground until it receives `SIGINT` or `SIGTERM`
 - `saga status` and task actions talk to the daemon over the configured Unix socket
 - there is no `enqueue` CLI on `main` yet, so task creation is still package-level rather than a user-facing command
@@ -92,7 +94,21 @@ Build the binary:
 make build
 ```
 
-Create a local config such as `./saga.local.yaml`:
+Generate a config interactively:
+
+```bash
+./bin/saga init
+```
+
+Or choose an explicit output path:
+
+```bash
+./bin/saga init ./saga.local.yaml
+```
+
+The command asks for a profile and then lets you confirm or edit each path.
+
+If you prefer to create a file manually, a local config such as `./saga.local.yaml` also works:
 
 ```yaml
 runtime:
@@ -121,6 +137,31 @@ Query it from another terminal:
 ```
 
 On a fresh database, `status` usually reports zero tasks until tasks are inserted through code or future higher-level orchestration commands.
+
+To register a task today, insert it directly into the SQLite database created by the daemon:
+
+```bash
+DB_PATH=/tmp/saga/state/saga.db
+
+sqlite3 "$DB_PATH" <<'SQL'
+INSERT INTO tasks (repository, issue_number, state, created_at, updated_at)
+VALUES (
+  'soudai/saga',
+  123,
+  'queued',
+  strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
+  strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+);
+SQL
+```
+
+Then confirm it from another terminal:
+
+```bash
+./bin/saga status --config ./saga.local.yaml
+```
+
+This is a temporary workflow until a dedicated enqueue command is added.
 
 ## Implemented building blocks
 

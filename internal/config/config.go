@@ -72,6 +72,18 @@ func Load(path string) (Config, error) {
 	return cfg, nil
 }
 
+func Marshal(cfg Config) ([]byte, error) {
+	if err := Validate(cfg); err != nil {
+		return nil, err
+	}
+
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("marshal config: %w", err)
+	}
+	return data, nil
+}
+
 func Validate(cfg Config) error {
 	if cfg.Runtime.StateDir == "" {
 		return fmt.Errorf("runtime.state_dir is required")

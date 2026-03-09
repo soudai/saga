@@ -12,7 +12,7 @@ func TestRunVersion(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := run([]string{"version"}, &stdout, &stderr)
+	code := run([]string{"version"}, strings.NewReader(""), &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("run() code = %d, want 0", code)
 	}
@@ -32,7 +32,7 @@ func TestRunDoctor(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := run([]string{"doctor"}, &stdout, &stderr)
+	code := run([]string{"doctor"}, strings.NewReader(""), &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("run() code = %d, want 0", code)
 	}
@@ -52,7 +52,7 @@ func TestRunUnknownCommand(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := run([]string{"unknown"}, &stdout, &stderr)
+	code := run([]string{"unknown"}, strings.NewReader(""), &stdout, &stderr)
 	if code != 1 {
 		t.Fatalf("run() code = %d, want 1", code)
 	}
