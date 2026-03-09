@@ -47,5 +47,46 @@ func Parse(data []byte) (Workflow, error) {
 		}
 		stage.Timeout = timeout
 	}
+	if err := Validate(workflow); err != nil {
+		return Workflow{}, err
+	}
 	return workflow, nil
+}
+
+func Validate(workflow Workflow) error {
+	if len(workflow.Stages) == 0 {
+		return fmt.Errorf("workflow must contain at least one stage")
+	}
+
+	stageIndex := make(map[string]struct{}, len(workflow.Stages))
+	for i, stage := range workflow.Stages {
+		if stage.Name == "" {
+			return fmt.Errorf("stage at index %d has empty name", i)
+		}
+		if stage.Role == "" {
+			return fmt.Errorf("stage %s is missing role", stage.Name)
+		}
+		if stage.Retry < 0 {
+			return fmt.Errorf("stage %s has negative retry", stage.Name)
+		}
+		if _, exists := stageIndex[stage.Name]; exists {
+			return fmt.Errorf("duplicate stage name: %s", stage.Name)
+		}
+		stageIndex[stage.Name] = struct{}{}
+	}
+
+	for _, stage := range workflow.Stages {
+		if stage.Transition.Success != "" {
+			if _, ok := stageIndex[stage.Transition.Success]; !ok {
+				return fmt.Errorf("stage %s references unknown success transition: %s", stage.Name, stage.Transition.Success)
+			}
+		}
+		if stage.Transition.Failure != "" {
+			if _, ok := stageIndex[stage.Transition.Failure]; !ok {
+				return fmt.Errorf("stage %s references unknown failure transition: %s", stage.Name, stage.Transition.Failure)
+			}
+		}
+	}
+
+	return nil
 }
