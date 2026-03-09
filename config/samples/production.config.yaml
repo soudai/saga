@@ -1,0 +1,10 @@
+runtime:
+  state_dir: /var/lib/saga
+  run_dir: /run/saga
+  log_dir: /var/log/saga
+
+server:
+  socket_path: /run/saga/saga.sock
+
+log:
+  level: warn
