@@ -1,11 +1,11 @@
 package codex
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"os/exec"
+	"syscall"
 	"time"
 
 	"github.com/soudai/saga/internal/artifact"
@@ -59,21 +59,70 @@ func (Runner) Run(ctx context.Context, req RunnerRequest) (Result, error) {
 		defer cancel()
 	}
 
-	startedAt := time.Now().UTC()
+	artifactStore := artifact.New(req.ArtifactRoot)
+	stdoutFile, stdoutPath, err := artifactStore.CreateFile(req.RunID, req.StageName, "stdout.log")
+	if err != nil {
+		return Result{}, err
+	}
+	defer stdoutFile.Close()
 
-	cmd := exec.CommandContext(ctx, req.CommandPath, req.Args...)
+	stderrFile, stderrPath, err := artifactStore.CreateFile(req.RunID, req.StageName, "stderr.log")
+	if err != nil {
+		return Result{}, err
+	}
+	defer stderrFile.Close()
+
+	cmd := exec.Command(req.CommandPath, req.Args...)
 	cmd.Dir = req.WorkDir
 	cmd.Env = os.Environ()
 	for key, value := range req.Env {
 		cmd.Env = append(cmd.Env, key+"="+value)
 	}
+	cmd.Env = append(cmd.Env,
+		"SAGA_SANDBOX="+string(req.Sandbox),
+		fmt.Sprintf("SAGA_NETWORK=%t", req.Network),
+		"SAGA_MODEL="+req.Model,
+	)
+	cmd.Stdout = stdoutFile
+	cmd.Stderr = stderrFile
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
+	startedAt := time.Now().UTC()
+	result := Result{
+		Command:    append([]string{req.CommandPath}, req.Args...),
+		Sandbox:    req.Sandbox,
+		Network:    req.Network,
+		Model:      req.Model,
+		ExitCode:   -1,
+		StdoutPath: stdoutPath,
+		StderrPath: stderrPath,
+		StartedAt:  startedAt,
+	}
 
-	runErr := cmd.Run()
+	if err := cmd.Start(); err != nil {
+		result.FinishedAt = time.Now().UTC()
+		if _, writeErr := artifactStore.WriteJSON(req.RunID, req.StageName, "result.json", result); writeErr != nil {
+			return Result{}, writeErr
+		}
+		return result, fmt.Errorf("start command: %w", err)
+	}
+
+	done := make(chan struct{})
+	defer close(done)
+	go func() {
+		select {
+		case <-ctx.Done():
+			_ = killProcessGroup(cmd.Process.Pid)
+		case <-done:
+		}
+	}()
+
+	waitCh := make(chan error, 1)
+	go func() {
+		waitCh <- cmd.Wait()
+	}()
+
+	runErr := <-waitCh
 	finishedAt := time.Now().UTC()
 
 	exitCode := 0
@@ -83,32 +132,17 @@ func (Runner) Run(ctx context.Context, req RunnerRequest) (Result, error) {
 		} else if ctx.Err() != nil {
 			exitCode = -1
 		} else {
-			return Result{}, fmt.Errorf("run command: %w", runErr)
+			result.FinishedAt = finishedAt
+			if _, writeErr := artifactStore.WriteJSON(req.RunID, req.StageName, "result.json", result); writeErr != nil {
+				return Result{}, writeErr
+			}
+			return result, fmt.Errorf("run command: %w", runErr)
 		}
 	}
 
-	artifactStore := artifact.New(req.ArtifactRoot)
-	stdoutPath, err := artifactStore.WriteFile(req.RunID, req.StageName, "stdout.log", stdout.Bytes())
-	if err != nil {
-		return Result{}, err
-	}
-	stderrPath, err := artifactStore.WriteFile(req.RunID, req.StageName, "stderr.log", stderr.Bytes())
-	if err != nil {
-		return Result{}, err
-	}
-
-	result := Result{
-		Command:    append([]string{req.CommandPath}, req.Args...),
-		Sandbox:    req.Sandbox,
-		Network:    req.Network,
-		Model:      req.Model,
-		ExitCode:   exitCode,
-		StdoutPath: stdoutPath,
-		StderrPath: stderrPath,
-		StartedAt:  startedAt,
-		FinishedAt: finishedAt,
-		TimedOut:   ctx.Err() == context.DeadlineExceeded,
-	}
+	result.ExitCode = exitCode
+	result.FinishedAt = finishedAt
+	result.TimedOut = ctx.Err() == context.DeadlineExceeded
 
 	if _, err := artifactStore.WriteJSON(req.RunID, req.StageName, "result.json", result); err != nil {
 		return Result{}, err
@@ -121,4 +155,14 @@ func (Runner) Run(ctx context.Context, req RunnerRequest) (Result, error) {
 		return result, runErr
 	}
 	return result, nil
+}
+
+func killProcessGroup(pid int) error {
+	if pid <= 0 {
+		return nil
+	}
+	if err := syscall.Kill(-pid, syscall.SIGKILL); err != nil && err != syscall.ESRCH {
+		return err
+	}
+	return nil
 }
