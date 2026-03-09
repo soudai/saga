@@ -26,18 +26,22 @@ func TestRunVersion(t *testing.T) {
 	}
 }
 
-func TestRunUnknownCommand(t *testing.T) {
+func TestRunDoctor(t *testing.T) {
 	t.Parallel()
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := run([]string{"unknown"}, &stdout, &stderr)
-	if code != 1 {
-		t.Fatalf("run() code = %d, want 1", code)
+	code := run([]string{"doctor"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("run() code = %d, want 0", code)
 	}
 
-	if !strings.Contains(stderr.String(), "unknown command") {
-		t.Fatalf("stderr = %q, want unknown command error", stderr.String())
+	if !strings.Contains(stdout.String(), "config validation") {
+		t.Fatalf("stdout = %q, want doctor output", stdout.String())
+	}
+
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
 	}
 }
