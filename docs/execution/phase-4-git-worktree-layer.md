@@ -9,7 +9,7 @@
 - primary worktree の作成
 - branch 命名の実装
 - retry / recreate ロジックの追加
-- startup orphan cleanup の追加
+- orphan cleanup helper の追加
 - shadow worktree の生成
 
 ## 実装ステップ
@@ -17,7 +17,7 @@
 2. task ID と issue 番号から一意な branch 名を生成するルールを定義し、primary worktree 作成処理を実装する。
 3. `tester`, `reviewer`, `verifier` 向けに shadow worktree を派生させる処理を追加する。
 4. retry 時の再利用・再作成条件を定義し、破損した worktree を安全に作り直せるようにする。
-5. 起動時 orphan cleanup と cleanup の integration test を追加する。
+5. orphan cleanup helper と cleanup の integration test を追加する。
 
 ## 完了条件
 - task ごとに独立 worktree を作成できる
