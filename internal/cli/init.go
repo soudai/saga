@@ -91,18 +91,22 @@ func runInit(stdin io.Reader, stdout io.Writer, args []string, force bool, ops i
 	if err != nil {
 		return err
 	}
+	answers.StateDir = resolvePath(wd, answers.StateDir)
 	answers.RunDir, err = promptValue(reader, stdout, "Run dir", answers.RunDir)
 	if err != nil {
 		return err
 	}
+	answers.RunDir = resolvePath(wd, answers.RunDir)
 	answers.LogDir, err = promptValue(reader, stdout, "Log dir", answers.LogDir)
 	if err != nil {
 		return err
 	}
+	answers.LogDir = resolvePath(wd, answers.LogDir)
 	answers.SocketPath, err = promptValue(reader, stdout, "Socket path", answers.SocketPath)
 	if err != nil {
 		return err
 	}
+	answers.SocketPath = resolvePath(wd, answers.SocketPath)
 	answers.LogLevel, err = promptValue(reader, stdout, "Log level", answers.LogLevel)
 	if err != nil {
 		return err
@@ -148,10 +152,18 @@ func runInit(stdin io.Reader, stdout io.Writer, args []string, force bool, ops i
 		return fmt.Errorf("write config: %w", err)
 	}
 
-	_, _ = fmt.Fprintf(stdout, "\nWrote %s\n\n", answers.ConfigPath)
-	_, _ = fmt.Fprintf(stdout, "Next steps:\n")
-	_, _ = fmt.Fprintf(stdout, "  saga doctor --config %s\n", answers.ConfigPath)
-	_, _ = fmt.Fprintf(stdout, "  saga serve --config %s\n", answers.ConfigPath)
+	if err := writef(stdout, "\nWrote %s\n\n", answers.ConfigPath); err != nil {
+		return err
+	}
+	if err := writef(stdout, "Next steps:\n"); err != nil {
+		return err
+	}
+	if err := writef(stdout, "  saga doctor --config %s\n", answers.ConfigPath); err != nil {
+		return err
+	}
+	if err := writef(stdout, "  saga serve --config %s\n", answers.ConfigPath); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -187,9 +199,15 @@ func defaultInitAnswers(wd string, profile initProfile) initAnswers {
 }
 
 func promptProfile(reader *bufio.Reader, stdout io.Writer, profile initProfile) (initProfile, error) {
-	_, _ = fmt.Fprintln(stdout, "Select config profile:")
-	_, _ = fmt.Fprintln(stdout, "  1) project-local")
-	_, _ = fmt.Fprintln(stdout, "  2) system-wide")
+	if err := writef(stdout, "Select config profile:\n"); err != nil {
+		return "", err
+	}
+	if err := writef(stdout, "  1) project-local\n"); err != nil {
+		return "", err
+	}
+	if err := writef(stdout, "  2) system-wide\n"); err != nil {
+		return "", err
+	}
 
 	defaultChoice := "1"
 	if profile == initProfileSystem {
@@ -207,16 +225,22 @@ func promptProfile(reader *bufio.Reader, stdout io.Writer, profile initProfile) 
 		case "2", "system", "system-wide":
 			return initProfileSystem, nil
 		default:
-			_, _ = fmt.Fprintf(stdout, "Unsupported profile %q. Use 1 or 2.\n", value)
+			if err := writef(stdout, "Unsupported profile %q. Use 1 or 2.\n", value); err != nil {
+				return "", err
+			}
 		}
 	}
 }
 
 func promptValue(reader *bufio.Reader, stdout io.Writer, label, defaultValue string) (string, error) {
 	if defaultValue == "" {
-		_, _ = fmt.Fprintf(stdout, "%s: ", label)
+		if err := writef(stdout, "%s: ", label); err != nil {
+			return "", err
+		}
 	} else {
-		_, _ = fmt.Fprintf(stdout, "%s [%s]: ", label, defaultValue)
+		if err := writef(stdout, "%s [%s]: ", label, defaultValue); err != nil {
+			return "", err
+		}
 	}
 
 	line, err := reader.ReadString('\n')
@@ -254,7 +278,9 @@ func promptYesNo(reader *bufio.Reader, stdout io.Writer, label string, defaultYe
 			}
 			return false, nil
 		default:
-			_, _ = fmt.Fprintf(stdout, "Please answer yes or no.\n")
+			if err := writef(stdout, "Please answer yes or no.\n"); err != nil {
+				return false, err
+			}
 		}
 	}
 }
@@ -275,4 +301,9 @@ func resolvePath(wd, path string) string {
 		return filepath.Clean(path)
 	}
 	return filepath.Join(wd, path)
+}
+
+func writef(w io.Writer, format string, args ...any) error {
+	_, err := fmt.Fprintf(w, format, args...)
+	return err
 }
