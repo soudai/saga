@@ -36,6 +36,7 @@ func NewRootCommand(stdin io.Reader, stdout, stderr io.Writer) *cobra.Command {
 	cmd.PersistentFlags().StringVar(&configPath, "config", "", "path to config file")
 
 	cmd.AddCommand(newInitCommand(stdin, stdout))
+	cmd.AddCommand(newEnqueueCommand(stdout, &configPath))
 	cmd.AddCommand(newVersionCommand(stdout))
 	cmd.AddCommand(newDoctorCommand(stdout, stderr, &configPath))
 	cmd.AddCommand(newServeCommand(stdout, stderr, &configPath))
@@ -44,6 +45,36 @@ func NewRootCommand(stdin io.Reader, stdout, stderr io.Writer) *cobra.Command {
 	cmd.AddCommand(newTaskActionCommand("retry", "Retry a task", &configPath))
 	cmd.AddCommand(newTaskActionCommand("resume", "Resume a task", &configPath))
 	return cmd
+}
+
+func newEnqueueCommand(stdout io.Writer, configPath *string) *cobra.Command {
+	return &cobra.Command{
+		Use:   "enqueue <repository> <issue-number>",
+		Short: "Register a queued task",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg, err := config.Load(*configPath)
+			if err != nil {
+				return err
+			}
+
+			issueNumber, err := strconv.ParseInt(args[1], 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid issue number: %w", err)
+			}
+			if issueNumber <= 0 {
+				return fmt.Errorf("issue number must be greater than zero")
+			}
+
+			task, err := control.NewClient(cfg.Server.SocketPath).Enqueue(cmd.Context(), args[0], issueNumber)
+			if err != nil {
+				return err
+			}
+
+			_, err = fmt.Fprintf(stdout, "task id=%d repo=%s issue=%d state=%s\n", task.ID, task.Repository, task.IssueNumber, task.State)
+			return err
+		},
+	}
 }
 
 func newVersionCommand(stdout io.Writer) *cobra.Command {

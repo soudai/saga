@@ -1,17 +1,22 @@
 package control
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/soudai/saga/internal/store"
 )
 
 type Client struct {
 	http *http.Client
 }
+
+type TaskResponse = store.Task
 
 func NewClient(socketPath string) *Client {
 	transport := &http.Transport{
@@ -49,6 +54,38 @@ func (c *Client) Status(ctx context.Context) (StatusResponse, error) {
 		return StatusResponse{}, err
 	}
 	return payload, nil
+}
+
+func (c *Client) Enqueue(ctx context.Context, repository string, issueNumber int64) (TaskResponse, error) {
+	body, err := json.Marshal(EnqueueRequest{
+		Repository:  repository,
+		IssueNumber: issueNumber,
+	})
+	if err != nil {
+		return TaskResponse{}, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://saga/tasks", bytes.NewReader(body))
+	if err != nil {
+		return TaskResponse{}, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return TaskResponse{}, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		return TaskResponse{}, fmt.Errorf("enqueue request failed: %s", resp.Status)
+	}
+
+	var task TaskResponse
+	if err := json.NewDecoder(resp.Body).Decode(&task); err != nil {
+		return TaskResponse{}, err
+	}
+	return task, nil
 }
 
 func (c *Client) Cancel(ctx context.Context, taskID int64) error {

@@ -65,3 +65,23 @@ func TestRunUnknownCommand(t *testing.T) {
 		t.Fatalf("stdout = %q, want empty", stdout.String())
 	}
 }
+
+func TestRunEnqueueInvalidIssue(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := run([]string{"enqueue", "soudai/saga", "not-a-number"}, strings.NewReader(""), &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("run() code = %d, want 1", code)
+	}
+
+	if !strings.Contains(stderr.String(), "invalid issue number") {
+		t.Fatalf("stderr = %q, want invalid issue number error", stderr.String())
+	}
+
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
+	}
+}
