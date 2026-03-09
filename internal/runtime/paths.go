@@ -30,9 +30,13 @@ func (p Paths) EnsureDirs() error {
 		p.LogDir,
 		filepath.Dir(p.SocketPath),
 	} {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func (p Paths) DatabasePath() string {
+	return filepath.Join(p.StateDir, "saga.db")
 }
