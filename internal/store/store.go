@@ -7,6 +7,7 @@ import (
 )
 
 var ErrTaskNotFound = errors.New("task not found")
+var ErrLeaseHeld = errors.New("lease held by another worker")
 
 type TaskState string
 

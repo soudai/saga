@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -54,7 +55,9 @@ func Load(path string) (Config, error) {
 		}
 
 		var fileCfg Config
-		if err := yaml.Unmarshal(raw, &fileCfg); err != nil {
+		decoder := yaml.NewDecoder(bytes.NewReader(raw))
+		decoder.KnownFields(true)
+		if err := decoder.Decode(&fileCfg); err != nil {
 			return Config{}, fmt.Errorf("parse config: %w", err)
 		}
 
@@ -73,11 +76,20 @@ func Validate(cfg Config) error {
 	if cfg.Runtime.StateDir == "" {
 		return fmt.Errorf("runtime.state_dir is required")
 	}
+	if !filepath.IsAbs(cfg.Runtime.StateDir) {
+		return fmt.Errorf("runtime.state_dir must be absolute")
+	}
 	if cfg.Runtime.RunDir == "" {
 		return fmt.Errorf("runtime.run_dir is required")
 	}
+	if !filepath.IsAbs(cfg.Runtime.RunDir) {
+		return fmt.Errorf("runtime.run_dir must be absolute")
+	}
 	if cfg.Runtime.LogDir == "" {
 		return fmt.Errorf("runtime.log_dir is required")
+	}
+	if !filepath.IsAbs(cfg.Runtime.LogDir) {
+		return fmt.Errorf("runtime.log_dir must be absolute")
 	}
 	if cfg.Server.SocketPath == "" {
 		return fmt.Errorf("server.socket_path is required")

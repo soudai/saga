@@ -29,5 +29,15 @@ func Run(cfg config.Config) []Check {
 			OK:     filepath.IsAbs(cfg.Runtime.StateDir),
 			Detail: cfg.Runtime.StateDir,
 		},
+		{
+			Name:   "runtime run dir",
+			OK:     filepath.IsAbs(cfg.Runtime.RunDir),
+			Detail: cfg.Runtime.RunDir,
+		},
+		{
+			Name:   "runtime log dir",
+			OK:     filepath.IsAbs(cfg.Runtime.LogDir),
+			Detail: cfg.Runtime.LogDir,
+		},
 	}
 }
