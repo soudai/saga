@@ -22,11 +22,11 @@ func MatchesIssue(issue Issue, selector Selector) bool {
 		return true
 	}
 	for _, command := range selector.Commands {
-		if strings.Contains(issue.Body, command) {
-			return true
-		}
 		for _, comment := range issue.Comments {
-			if strings.Contains(comment, command) {
+			if comment.AuthorIsBot {
+				continue
+			}
+			if strings.Contains(comment.Body, command) {
 				return true
 			}
 		}
