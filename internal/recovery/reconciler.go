@@ -28,10 +28,14 @@ func Reconcile(snapshot Snapshot) Decision {
 			return DecisionKeepRunning
 		}
 		return DecisionRetry
+	case store.TaskStateCompleted:
+		return DecisionComplete
+	case store.TaskStateFailed:
+		return DecisionRetry
 	default:
 		if snapshot.PROpen {
 			return DecisionComplete
 		}
-		return DecisionKeepRunning
+		return DecisionRetry
 	}
 }
