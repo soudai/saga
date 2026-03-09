@@ -6,7 +6,7 @@ Saga は、Linux / WSL2 上でローカル常駐 orchestration を行う Go 製 
 
 `main` で end-to-end に動くもの:
 
-- `version` / `doctor` / `serve` / `status` / `cancel` / `retry` / `resume` の CLI
+- `init` / `version` / `doctor` / `serve` / `status` / `cancel` / `retry` / `resume` の CLI
 - Unix socket 上で動くローカル daemon
 - SQLite ベースの task / run / lease 保存
 - control API 経由の status 取得と task state 更新
@@ -25,6 +25,7 @@ Saga は、Linux / WSL2 上でローカル常駐 orchestration を行う Go 製 
 
 ```bash
 saga version
+saga init
 saga doctor --config /path/to/config.yaml
 saga serve --config /path/to/config.yaml
 saga status --config /path/to/config.yaml
@@ -35,6 +36,7 @@ saga resume <task-id> --config /path/to/config.yaml
 
 補足:
 
+- `saga init` は対話形式で config file を生成し、project-local / system-wide の初期値を選べます
 - `saga serve` は `SIGINT` または `SIGTERM` を受けるまで foreground で動作します
 - `saga status` と task action は設定された Unix socket 経由で daemon に接続します
 - 現在の `main` には `enqueue` CLI はまだなく、task 作成は package レベルの処理です
@@ -92,7 +94,21 @@ binary を build します。
 make build
 ```
 
-`./saga.local.yaml` の例:
+まず対話形式で config を生成できます。
+
+```bash
+./bin/saga init
+```
+
+出力先を明示することもできます。
+
+```bash
+./bin/saga init ./saga.local.yaml
+```
+
+このコマンドは profile を選ばせたあと、各 path や log level を確認・編集できます。
+
+手動で書く場合は、`./saga.local.yaml` のような config でも動きます。
 
 ```yaml
 runtime:

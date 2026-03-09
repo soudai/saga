@@ -8,11 +8,11 @@ import (
 )
 
 func main() {
-	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
 }
 
-func run(args []string, stdout, stderr io.Writer) int {
-	cmd := cli.NewRootCommand(stdout, stderr)
+func run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	cmd := cli.NewRootCommand(stdin, stdout, stderr)
 	cmd.SetArgs(args)
 
 	if err := cmd.Execute(); err != nil {

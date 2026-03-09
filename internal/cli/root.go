@@ -20,7 +20,7 @@ import (
 	"github.com/soudai/saga/internal/version"
 )
 
-func NewRootCommand(stdout, stderr io.Writer) *cobra.Command {
+func NewRootCommand(stdin io.Reader, stdout, stderr io.Writer) *cobra.Command {
 	var configPath string
 
 	cmd := &cobra.Command{
@@ -29,11 +29,13 @@ func NewRootCommand(stdout, stderr io.Writer) *cobra.Command {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
+	cmd.SetIn(stdin)
 	cmd.SetOut(stdout)
 	cmd.SetErr(stderr)
 
 	cmd.PersistentFlags().StringVar(&configPath, "config", "", "path to config file")
 
+	cmd.AddCommand(newInitCommand(stdin, stdout))
 	cmd.AddCommand(newVersionCommand(stdout))
 	cmd.AddCommand(newDoctorCommand(stdout, stderr, &configPath))
 	cmd.AddCommand(newServeCommand(stdout, stderr, &configPath))
