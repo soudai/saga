@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -39,5 +40,35 @@ func TestLoadFileOverride(t *testing.T) {
 	}
 	if cfg.Server.SocketPath != "/tmp/saga.sock" {
 		t.Fatalf("socket path = %q, want override", cfg.Server.SocketPath)
+	}
+}
+
+func TestLoadRejectsUnknownField(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.yaml")
+	content := []byte("runtime:\n  state_dir: /tmp/saga-state\n  unknown: true\n")
+	if err := os.WriteFile(path, content, 0o644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	_, err := Load(path)
+	if err == nil {
+		t.Fatal("Load() error = nil, want unknown field error")
+	}
+	if !strings.Contains(err.Error(), "field unknown") {
+		t.Fatalf("Load() error = %v, want unknown field", err)
+	}
+}
+
+func TestValidateRejectsRelativeRuntimeDirs(t *testing.T) {
+	t.Parallel()
+
+	cfg := Default()
+	cfg.Runtime.StateDir = "relative-state"
+
+	if err := Validate(cfg); err == nil || !strings.Contains(err.Error(), "runtime.state_dir must be absolute") {
+		t.Fatalf("Validate() error = %v, want absolute path error", err)
 	}
 }

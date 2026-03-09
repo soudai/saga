@@ -7,6 +7,7 @@ import (
 )
 
 var ErrTaskNotFound = errors.New("task not found")
+var ErrLeaseHeld = errors.New("lease held by another worker")
 
 type TaskState string
 
@@ -14,6 +15,8 @@ const (
 	TaskStateQueued    TaskState = "queued"
 	TaskStateRunning   TaskState = "running"
 	TaskStateCancelled TaskState = "cancelled"
+	TaskStateCompleted TaskState = "completed"
+	TaskStateFailed    TaskState = "failed"
 )
 
 type Task struct {
