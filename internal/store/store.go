@@ -15,6 +15,8 @@ const (
 	TaskStateQueued    TaskState = "queued"
 	TaskStateRunning   TaskState = "running"
 	TaskStateCancelled TaskState = "cancelled"
+	TaskStateCompleted TaskState = "completed"
+	TaskStateFailed    TaskState = "failed"
 )
 
 type Task struct {
