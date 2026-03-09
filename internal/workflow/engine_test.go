@@ -14,12 +14,14 @@ func TestEngineExecute(t *testing.T) {
 		Stages: []Stage{
 			{
 				Name: "plan",
+				Role: "planner",
 				Transition: Transition{
 					Success: "implement",
 				},
 			},
 			{
 				Name: "implement",
+				Role: "implementer",
 			},
 		},
 	}
