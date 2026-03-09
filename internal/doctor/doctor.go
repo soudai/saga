@@ -1,7 +1,9 @@
 package doctor
 
 import (
+	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/soudai/saga/internal/config"
 )
@@ -29,5 +31,37 @@ func Run(cfg config.Config) []Check {
 			OK:     filepath.IsAbs(cfg.Runtime.StateDir),
 			Detail: cfg.Runtime.StateDir,
 		},
+		{
+			Name:   "systemd available",
+			OK:     hasSystemd(),
+			Detail: "/run/systemd/system",
+		},
+		{
+			Name:   "wsl2 environment",
+			OK:     isWSL(),
+			Detail: "detected from /proc/version or WSL_INTEROP",
+		},
+		{
+			Name:   "linux filesystem recommendation",
+			OK:     !strings.HasPrefix(cfg.Runtime.StateDir, "/mnt/"),
+			Detail: cfg.Runtime.StateDir,
+		},
 	}
+}
+
+func hasSystemd() bool {
+	_, err := os.Stat("/run/systemd/system")
+	return err == nil
+}
+
+func isWSL() bool {
+	if os.Getenv("WSL_INTEROP") != "" {
+		return true
+	}
+
+	raw, err := os.ReadFile("/proc/version")
+	if err != nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(string(raw)), "microsoft")
 }
