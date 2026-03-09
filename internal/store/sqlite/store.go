@@ -202,15 +202,29 @@ func (s *Store) ListActiveRuns(ctx context.Context) ([]store.Run, error) {
 }
 
 func (s *Store) AcquireLease(ctx context.Context, scope, holder string, expiresAt time.Time) error {
-	_, err := s.db.ExecContext(
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	result, err := s.db.ExecContext(
 		ctx,
 		`INSERT INTO leases (scope, holder, expires_at) VALUES (?, ?, ?)
-		 ON CONFLICT(scope) DO UPDATE SET holder = excluded.holder, expires_at = excluded.expires_at`,
+		 ON CONFLICT(scope) DO UPDATE SET holder = excluded.holder, expires_at = excluded.expires_at
+		 WHERE leases.holder = excluded.holder OR leases.expires_at <= ?`,
 		scope,
 		holder,
 		expiresAt.UTC().Format(time.RFC3339Nano),
+		now,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return store.ErrLeaseHeld
+	}
+	return nil
 }
 
 func (s *Store) Status(ctx context.Context) (store.Status, error) {
