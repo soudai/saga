@@ -1,12 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os"
-	"strings"
 
-	"github.com/soudai/saga/internal/version"
+	"github.com/soudai/saga/internal/cli"
 )
 
 func main() {
@@ -14,29 +12,13 @@ func main() {
 }
 
 func run(args []string, stdout, stderr io.Writer) int {
-	if len(args) == 0 {
-		printUsage(stderr)
+	cmd := cli.NewRootCommand(stdout, stderr)
+	cmd.SetArgs(args)
+
+	if err := cmd.Execute(); err != nil {
+		_, _ = io.WriteString(stderr, err.Error()+"\n")
 		return 1
 	}
 
-	switch strings.TrimSpace(args[0]) {
-	case "version", "--version", "-v":
-		fmt.Fprintln(stdout, version.String())
-		return 0
-	case "help", "--help", "-h":
-		printUsage(stdout)
-		return 0
-	default:
-		fmt.Fprintf(stderr, "unknown command: %s\n", args[0])
-		printUsage(stderr)
-		return 1
-	}
-}
-
-func printUsage(w io.Writer) {
-	fmt.Fprintln(w, "usage: saga <command>")
-	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "commands:")
-	fmt.Fprintln(w, "  help      show this help message")
-	fmt.Fprintln(w, "  version   print build information")
+	return 0
 }
