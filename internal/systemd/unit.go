@@ -1,8 +1,15 @@
 package systemd
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
-func DefaultUnit(execStart string) string {
+func DefaultUnit(execStart string) (string, error) {
+	if strings.ContainsAny(execStart, "\r\n") {
+		return "", fmt.Errorf("execStart must not contain newlines")
+	}
+
 	return fmt.Sprintf(`[Unit]
 Description=Saga Orchestrator
 After=network-online.target
@@ -22,5 +29,5 @@ TimeoutStopSec=180
 
 [Install]
 WantedBy=multi-user.target
-`, execStart)
+`, execStart), nil
 }

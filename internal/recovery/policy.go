@@ -8,6 +8,9 @@ type RetryPolicy struct {
 }
 
 func (p RetryPolicy) CanRetry(attempt int) bool {
+	if attempt < 0 {
+		return false
+	}
 	return attempt < p.MaxAttempts
 }
 

@@ -11,7 +11,27 @@ func TestRunIncludesOperationalChecks(t *testing.T) {
 
 	cfg := config.Default()
 	checks := Run(cfg)
-	if len(checks) < 6 {
-		t.Fatalf("len(checks) = %d, want >= 6", len(checks))
+
+	wantNames := map[string]bool{
+		"config validation":               false,
+		"socket path":                     false,
+		"runtime state dir":               false,
+		"runtime run dir":                 false,
+		"runtime log dir":                 false,
+		"systemd available":               false,
+		"wsl2 environment":                false,
+		"linux filesystem recommendation": false,
+	}
+
+	for _, check := range checks {
+		if _, ok := wantNames[check.Name]; ok {
+			wantNames[check.Name] = true
+		}
+	}
+
+	for name, seen := range wantNames {
+		if !seen {
+			t.Fatalf("missing check %q", name)
+		}
 	}
 }

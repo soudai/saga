@@ -32,6 +32,16 @@ func Run(cfg config.Config) []Check {
 			Detail: cfg.Runtime.StateDir,
 		},
 		{
+			Name:   "runtime run dir",
+			OK:     filepath.IsAbs(cfg.Runtime.RunDir),
+			Detail: cfg.Runtime.RunDir,
+		},
+		{
+			Name:   "runtime log dir",
+			OK:     filepath.IsAbs(cfg.Runtime.LogDir),
+			Detail: cfg.Runtime.LogDir,
+		},
+		{
 			Name:   "systemd available",
 			OK:     hasSystemd(),
 			Detail: "/run/systemd/system",
@@ -50,8 +60,8 @@ func Run(cfg config.Config) []Check {
 }
 
 func hasSystemd() bool {
-	_, err := os.Stat("/run/systemd/system")
-	return err == nil
+	info, err := os.Stat("/run/systemd/system")
+	return err == nil && info.IsDir()
 }
 
 func isWSL() bool {
