@@ -6,7 +6,7 @@ Saga は、Linux / WSL2 上でローカル常駐 orchestration を行う Go 製 
 
 `main` で end-to-end に動くもの:
 
-- `init` / `version` / `doctor` / `serve` / `status` / `cancel` / `retry` / `resume` の CLI
+- `init` / `enqueue` / `version` / `doctor` / `serve` / `status` / `cancel` / `retry` / `resume` の CLI
 - Unix socket 上で動くローカル daemon
 - SQLite ベースの task / run / lease 保存
 - control API 経由の status 取得と task state 更新
@@ -26,6 +26,7 @@ Saga は、Linux / WSL2 上でローカル常駐 orchestration を行う Go 製 
 ```bash
 saga version
 saga init
+saga enqueue <repository> <issue-number> --config /path/to/config.yaml
 saga doctor --config /path/to/config.yaml
 saga serve --config /path/to/config.yaml
 saga status --config /path/to/config.yaml
@@ -37,9 +38,9 @@ saga resume <task-id> --config /path/to/config.yaml
 補足:
 
 - `saga init` は対話形式で config file を生成し、project-local / system-wide の初期値を選べます
+- `saga enqueue <repository> <issue-number>` は daemon の control API 経由で `queued` task を登録します
 - `saga serve` は `SIGINT` または `SIGTERM` を受けるまで foreground で動作します
 - `saga status` と task action は設定された Unix socket 経由で daemon に接続します
-- 現在の `main` には `enqueue` CLI はまだなく、task 作成は package レベルの処理です
 
 ## ランタイム構成
 
@@ -55,6 +56,7 @@ saga resume <task-id> --config /path/to/config.yaml
 現在 daemon が公開している control plane endpoint:
 
 - `GET /status`
+- `POST /tasks`
 - `POST /tasks/{id}/cancel`
 - `POST /tasks/{id}/retry`
 - `POST /tasks/{id}/resume`
@@ -132,36 +134,10 @@ log:
 別ターミナルから確認します。
 
 ```bash
+./bin/saga enqueue soudai/saga 123 --config ./saga.local.yaml
 ./bin/saga doctor --config ./saga.local.yaml
 ./bin/saga status --config ./saga.local.yaml
 ```
-
-新規 database では、コードまたは将来の上位 orchestration コマンドで task が投入されるまでは `status` が 0 task を返すのが通常です。
-
-現時点で task を実際に登録するには、daemon が作成した SQLite database に直接 insert します。
-
-```bash
-DB_PATH=/tmp/saga/state/saga.db
-
-sqlite3 "$DB_PATH" <<'SQL'
-INSERT INTO tasks (repository, issue_number, state, created_at, updated_at)
-VALUES (
-  'soudai/saga',
-  123,
-  'queued',
-  strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
-  strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-);
-SQL
-```
-
-その後、別ターミナルから確認します。
-
-```bash
-./bin/saga status --config ./saga.local.yaml
-```
-
-これは専用の `enqueue` コマンドが入るまでの暫定手順です。
 
 ## 実装済み building block
 

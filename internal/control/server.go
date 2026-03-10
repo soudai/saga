@@ -22,6 +22,11 @@ type StatusResponse struct {
 	ActiveRuns int          `json:"active_runs"`
 }
 
+type EnqueueRequest struct {
+	Repository  string `json:"repository"`
+	IssueNumber int64  `json:"issue_number"`
+}
+
 func NewServer(store store.Store) *Server {
 	server := &Server{
 		store: store,
@@ -37,6 +42,7 @@ func (s *Server) Handler() http.Handler {
 
 func (s *Server) routes() {
 	s.mux.HandleFunc("/status", s.handleStatus)
+	s.mux.HandleFunc("/tasks", s.handleTasks)
 	s.mux.HandleFunc("/tasks/", s.handleTaskAction)
 }
 
@@ -53,7 +59,45 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *Server) handleTasks(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/tasks" && r.URL.Path != "/tasks/" {
+		writeError(w, http.StatusNotFound, errors.New("unknown route"))
+		return
+	}
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, errors.New("method not allowed"))
+		return
+	}
+
+	var req EnqueueRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Errorf("decode request: %w", err))
+		return
+	}
+	if req.Repository == "" {
+		writeError(w, http.StatusBadRequest, errors.New("repository is required"))
+		return
+	}
+	if req.IssueNumber <= 0 {
+		writeError(w, http.StatusBadRequest, errors.New("issue_number must be greater than zero"))
+		return
+	}
+
+	task, err := s.store.CreateTask(r.Context(), req.Repository, req.IssueNumber, store.TaskStateQueued)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, task)
+}
+
 func (s *Server) handleTaskAction(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/tasks/" {
+		s.handleTasks(w, r)
+		return
+	}
+
 	parts := strings.Split(strings.Trim(strings.TrimPrefix(r.URL.Path, "/tasks/"), "/"), "/")
 	if len(parts) != 2 {
 		writeError(w, http.StatusNotFound, errors.New("unknown route"))

@@ -2,10 +2,12 @@ package control_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/soudai/saga/internal/control"
@@ -67,6 +69,47 @@ func TestTaskActions(t *testing.T) {
 	}
 }
 
+func TestEnqueueTask(t *testing.T) {
+	t.Parallel()
+
+	for _, path := range []string{"/tasks", "/tasks/"} {
+		path := path
+		t.Run(path, func(t *testing.T) {
+			dbPath := filepath.Join(t.TempDir(), "saga.db")
+			sqliteStore, err := sqlite.Open(dbPath)
+			if err != nil {
+				t.Fatalf("Open() error = %v", err)
+			}
+			defer func() {
+				_ = sqliteStore.Close()
+			}()
+
+			req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{"repository":"soudai/saga","issue_number":123}`))
+			rec := httptest.NewRecorder()
+
+			control.NewServer(sqliteStore).Handler().ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusCreated {
+				t.Fatalf("status code = %d, want 201", rec.Code)
+			}
+
+			var task store.Task
+			if err := json.Unmarshal(rec.Body.Bytes(), &task); err != nil {
+				t.Fatalf("Unmarshal() error = %v", err)
+			}
+			if task.Repository != "soudai/saga" {
+				t.Fatalf("repository = %q, want %q", task.Repository, "soudai/saga")
+			}
+			if task.IssueNumber != 123 {
+				t.Fatalf("issue number = %d, want 123", task.IssueNumber)
+			}
+			if task.State != store.TaskStateQueued {
+				t.Fatalf("state = %q, want %q", task.State, store.TaskStateQueued)
+			}
+		})
+	}
+}
+
 func TestTaskActionErrors(t *testing.T) {
 	t.Parallel()
 
@@ -85,17 +128,20 @@ func TestTaskActionErrors(t *testing.T) {
 		name       string
 		method     string
 		path       string
+		body       string
 		statusCode int
 	}{
 		{name: "unknown action", method: http.MethodPost, path: "/tasks/1/pause", statusCode: http.StatusNotFound},
 		{name: "non post", method: http.MethodGet, path: "/tasks/1/cancel", statusCode: http.StatusMethodNotAllowed},
 		{name: "unknown task", method: http.MethodPost, path: "/tasks/999/cancel", statusCode: http.StatusNotFound},
+		{name: "enqueue missing repo", method: http.MethodPost, path: "/tasks", body: `{"issue_number":1}`, statusCode: http.StatusBadRequest},
+		{name: "enqueue invalid issue", method: http.MethodPost, path: "/tasks", body: `{"repository":"soudai/saga","issue_number":0}`, statusCode: http.StatusBadRequest},
 	}
 
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(tt.method, tt.path, nil)
+			req := httptest.NewRequest(tt.method, tt.path, strings.NewReader(tt.body))
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, req)
 

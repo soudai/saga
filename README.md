@@ -6,7 +6,7 @@ Saga is a Go-based AI agent framework for long-running local orchestration on Li
 
 What is end-to-end on `main`:
 
-- CLI commands for `init`, `version`, `doctor`, `serve`, `status`, `cancel`, `retry`, and `resume`
+- CLI commands for `init`, `enqueue`, `version`, `doctor`, `serve`, `status`, `cancel`, `retry`, and `resume`
 - A local daemon that opens a Unix socket control plane
 - SQLite-backed task/run/lease storage
 - Local status reporting and task state updates through the control API
@@ -26,6 +26,7 @@ What is implemented as tested packages but not yet wired into a full autonomous 
 ```bash
 saga version
 saga init
+saga enqueue <repository> <issue-number> --config /path/to/config.yaml
 saga doctor --config /path/to/config.yaml
 saga serve --config /path/to/config.yaml
 saga status --config /path/to/config.yaml
@@ -37,9 +38,9 @@ saga resume <task-id> --config /path/to/config.yaml
 Notes:
 
 - `saga init` interactively creates a config file with project-local or system-wide defaults
+- `saga enqueue <repository> <issue-number>` registers a queued task through the daemon control API
 - `saga serve` runs in the foreground until it receives `SIGINT` or `SIGTERM`
 - `saga status` and task actions talk to the daemon over the configured Unix socket
-- there is no `enqueue` CLI on `main` yet, so task creation is still package-level rather than a user-facing command
 
 ## Runtime architecture
 
@@ -55,6 +56,7 @@ Current runtime behavior:
 Control plane endpoints currently exposed by the daemon:
 
 - `GET /status`
+- `POST /tasks`
 - `POST /tasks/{id}/cancel`
 - `POST /tasks/{id}/retry`
 - `POST /tasks/{id}/resume`
@@ -132,36 +134,10 @@ Run the daemon in one terminal:
 Query it from another terminal:
 
 ```bash
+./bin/saga enqueue soudai/saga 123 --config ./saga.local.yaml
 ./bin/saga doctor --config ./saga.local.yaml
 ./bin/saga status --config ./saga.local.yaml
 ```
-
-On a fresh database, `status` usually reports zero tasks until tasks are inserted through code or future higher-level orchestration commands.
-
-To register a task today, insert it directly into the SQLite database created by the daemon:
-
-```bash
-DB_PATH=/tmp/saga/state/saga.db
-
-sqlite3 "$DB_PATH" <<'SQL'
-INSERT INTO tasks (repository, issue_number, state, created_at, updated_at)
-VALUES (
-  'soudai/saga',
-  123,
-  'queued',
-  strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
-  strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-);
-SQL
-```
-
-Then confirm it from another terminal:
-
-```bash
-./bin/saga status --config ./saga.local.yaml
-```
-
-This is a temporary workflow until a dedicated enqueue command is added.
 
 ## Implemented building blocks
 
