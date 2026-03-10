@@ -26,6 +26,8 @@ What is implemented as tested packages but not yet wired into a full autonomous 
 ```bash
 sg version
 sg init
+sg issue draft <repository> --from-file task.md
+sg issue create <repository> --from-file task.md
 sg enqueue <repository> <issue-number> --config /path/to/config.yaml
 sg doctor --config /path/to/config.yaml
 sg serve --config /path/to/config.yaml
@@ -38,9 +40,11 @@ sg resume <task-id> --config /path/to/config.yaml
 Notes:
 
 - `sg init` interactively creates a config file with project-local or system-wide defaults
+- `sg issue draft/create` renders or creates a task-instruction GitHub Issue from a markdown source file
 - `sg enqueue <repository> <issue-number>` registers a queued task through the daemon control API
 - `sg serve` runs in the foreground until it receives `SIGINT` or `SIGTERM`
 - `sg status` and task actions talk to the daemon over the configured Unix socket
+- `sg issue create` requires the GitHub CLI (`gh`) to be installed and authenticated
 
 ## Runtime architecture
 
@@ -137,6 +141,19 @@ Query it from another terminal:
 ./bin/sg enqueue soudai/saga 123 --config ./sg.local.yaml
 ./bin/sg doctor --config ./sg.local.yaml
 ./bin/sg status --config ./sg.local.yaml
+```
+
+To create a task-instruction issue on GitHub from a local markdown brief:
+
+```bash
+cat > task.md <<'EOF'
+Implement the enqueue flow for GitHub issues.
+EOF
+
+gh auth login
+./bin/sg issue draft soudai/saga --from-file task.md
+./bin/sg issue create soudai/saga --from-file task.md
+./bin/sg issue create soudai/saga --from-file task.md --enqueue --config ./sg.local.yaml
 ```
 
 ## Implemented building blocks

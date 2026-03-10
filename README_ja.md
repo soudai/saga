@@ -26,6 +26,8 @@ Saga は、Linux / WSL2 上でローカル常駐 orchestration を行う Go 製 
 ```bash
 sg version
 sg init
+sg issue draft <repository> --from-file task.md
+sg issue create <repository> --from-file task.md
 sg enqueue <repository> <issue-number> --config /path/to/config.yaml
 sg doctor --config /path/to/config.yaml
 sg serve --config /path/to/config.yaml
@@ -38,9 +40,11 @@ sg resume <task-id> --config /path/to/config.yaml
 補足:
 
 - `sg init` は対話形式で config file を生成し、project-local / system-wide の初期値を選べます
+- `sg issue draft/create` は markdown の指示書ソースから task 用 GitHub Issue を下書きまたは作成します
 - `sg enqueue <repository> <issue-number>` は daemon の control API 経由で `queued` task を登録します
 - `sg serve` は `SIGINT` または `SIGTERM` を受けるまで foreground で動作します
 - `sg status` と task action は設定された Unix socket 経由で daemon に接続します
+- `sg issue create` を使うには GitHub CLI (`gh`) の install と認証が必要です
 
 ## ランタイム構成
 
@@ -137,6 +141,19 @@ log:
 ./bin/sg enqueue soudai/saga 123 --config ./sg.local.yaml
 ./bin/sg doctor --config ./sg.local.yaml
 ./bin/sg status --config ./sg.local.yaml
+```
+
+ローカルの markdown から task 指示書 Issue を GitHub に作る例:
+
+```bash
+cat > task.md <<'EOF'
+GitHub Issue を enqueue できる flow を実装する。
+EOF
+
+gh auth login
+./bin/sg issue draft soudai/saga --from-file task.md
+./bin/sg issue create soudai/saga --from-file task.md
+./bin/sg issue create soudai/saga --from-file task.md --enqueue --config ./sg.local.yaml
 ```
 
 ## 実装済み building block
