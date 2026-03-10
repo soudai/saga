@@ -19,6 +19,8 @@
   - 実装フェーズ、マイルストーン、完了条件
 - [systemd-wsl2.md](./systemd-wsl2.md)
   - WSL2/systemd 上での運用要件と unit 例
+- [exaple.md](./exaple.md)
+  - 実際のユースケース別サンプル手順とチュートリアル
 
 ## v1 スコープ要約
 
@@ -38,3 +40,4 @@
 4. [tech-stack.md](./tech-stack.md)
 5. [implementation-plan.md](./implementation-plan.md)
 6. [systemd-wsl2.md](./systemd-wsl2.md)
+7. [exaple.md](./exaple.md)
