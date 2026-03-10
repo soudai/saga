@@ -13,7 +13,7 @@ import (
 func TestStoreStatus(t *testing.T) {
 	t.Parallel()
 
-	dbPath := filepath.Join(t.TempDir(), "saga.db")
+	dbPath := filepath.Join(t.TempDir(), "sg.db")
 	s, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("Open() error = %v", err)
@@ -52,7 +52,7 @@ func TestStoreStatus(t *testing.T) {
 func TestAcquireLeaseConflictAndRenewal(t *testing.T) {
 	t.Parallel()
 
-	dbPath := filepath.Join(t.TempDir(), "saga.db")
+	dbPath := filepath.Join(t.TempDir(), "sg.db")
 	s, err := Open(dbPath)
 	if err != nil {
 		t.Fatalf("Open() error = %v", err)

@@ -13,9 +13,9 @@
 - versioning / changelog の整備
 
 ## 実装ステップ
-1. smoke test の対象機能とクリティカルパスを洗い出し、`systemctl start saga` から Issue 検出、PR 作成までの最小シナリオを定義する。
+1. smoke test の対象機能とクリティカルパスを洗い出し、`systemctl start sg` から Issue 検出、PR 作成までの最小シナリオを定義する。
 2. v1 仕様との差分レビューを行い、更新が必要なユーザー向け / 開発者向けドキュメントを一覧化して反映する。
-3. `/etc/saga/config.yaml` と `.saga/config.yaml` を前提に、最小構成と推奨構成の sample config を追加する。
+3. `/etc/sg/config.yaml` と `.sg/config.yaml` を前提に、最小構成と推奨構成の sample config を追加する。
 4. build, test, package, release note 生成までを含む release pipeline を定義し、tag もしくは release branch で実行できるようにする。
 5. versioning policy を文書化し、`CHANGELOG.md` とリリースノートの更新手順を確立する。
 

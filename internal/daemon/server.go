@@ -75,7 +75,7 @@ func (s *Server) Serve(ctx context.Context) error {
 		serveErrCh <- err
 	}()
 
-	s.logger.Info("starting saga daemon", "socket_path", s.paths.SocketPath)
+	s.logger.Info("starting sg daemon", "socket_path", s.paths.SocketPath)
 	if err := s.notifier.Ready(); err != nil {
 		s.logger.Warn("failed to notify readiness; continuing without systemd notification", "error", err)
 	}
@@ -98,7 +98,7 @@ func (s *Server) Serve(ctx context.Context) error {
 	if err := <-serveErrCh; err != nil {
 		return err
 	}
-	s.logger.Info("stopping saga daemon")
+	s.logger.Info("stopping sg daemon")
 	return nil
 }
 

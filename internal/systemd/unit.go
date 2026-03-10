@@ -20,10 +20,10 @@ Type=notify
 ExecStart=%s
 Restart=on-failure
 RestartSec=5
-EnvironmentFile=/etc/saga/saga.env
-StateDirectory=saga
-RuntimeDirectory=saga
-LogsDirectory=saga
+EnvironmentFile=/etc/sg/sg.env
+StateDirectory=sg
+RuntimeDirectory=sg
+LogsDirectory=sg
 KillMode=control-group
 TimeoutStopSec=180
 

@@ -29,16 +29,16 @@ func TestInitCommandCreatesProjectLocalConfig(t *testing.T) {
 		t.Fatalf("Execute() error = %v", err)
 	}
 
-	configPath := filepath.Join(dir, ".saga", "config.yaml")
+	configPath := filepath.Join(dir, ".sg", "config.yaml")
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
 
-	if cfg.Server.SocketPath != filepath.Join(dir, ".saga", "run", "saga.sock") {
+	if cfg.Server.SocketPath != filepath.Join(dir, ".sg", "run", "sg.sock") {
 		t.Fatalf("socket path = %q, want project-local socket", cfg.Server.SocketPath)
 	}
-	if !strings.Contains(stdout.String(), "saga serve --config "+configPath) {
+	if !strings.Contains(stdout.String(), "sg serve --config "+configPath) {
 		t.Fatalf("stdout = %q, want next steps output", stdout.String())
 	}
 }
@@ -59,7 +59,7 @@ func TestInitCommandResolvesRelativePaths(t *testing.T) {
 		t.Fatalf("Execute() error = %v", err)
 	}
 
-	configPath := filepath.Join(dir, ".saga", "config.yaml")
+	configPath := filepath.Join(dir, ".sg", "config.yaml")
 	cfg, err := config.Load(configPath)
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
@@ -83,7 +83,7 @@ func TestInitCommandUsesSystemProfile(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	target := filepath.Join(dir, "etc", "saga", "config.yaml")
+	target := filepath.Join(dir, "etc", "sg", "config.yaml")
 
 	cmd := newInitCommandWithOps(strings.NewReader("2\n\n\n\n\n\n"), io.Discard, initFileOps{
 		getwd:     func() (string, error) { return dir, nil },
@@ -101,7 +101,7 @@ func TestInitCommandUsesSystemProfile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
-	if cfg.Runtime.StateDir != "/var/lib/saga" {
+	if cfg.Runtime.StateDir != "/var/lib/sg" {
 		t.Fatalf("state dir = %q, want system default", cfg.Runtime.StateDir)
 	}
 	if cfg.Log.Level != "warn" {
@@ -113,7 +113,7 @@ func TestInitCommandPromptsBeforeOverwrite(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	configPath := filepath.Join(dir, ".saga", "config.yaml")
+	configPath := filepath.Join(dir, ".sg", "config.yaml")
 	if err := os.MkdirAll(filepath.Dir(configPath), 0o755); err != nil {
 		t.Fatalf("MkdirAll() error = %v", err)
 	}

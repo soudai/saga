@@ -32,12 +32,12 @@ type LogConfig struct {
 func Default() Config {
 	return Config{
 		Runtime: RuntimeConfig{
-			StateDir: "/var/lib/saga",
-			RunDir:   "/run/saga",
-			LogDir:   "/var/log/saga",
+			StateDir: "/var/lib/sg",
+			RunDir:   "/run/sg",
+			LogDir:   "/var/log/sg",
 		},
 		Server: ServerConfig{
-			SocketPath: "/run/saga/saga.sock",
+			SocketPath: "/run/sg/sg.sock",
 		},
 		Log: LogConfig{
 			Level: "info",

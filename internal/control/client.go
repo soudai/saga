@@ -34,7 +34,7 @@ func NewClient(socketPath string) *Client {
 }
 
 func (c *Client) Status(ctx context.Context) (StatusResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://saga/status", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://sg/status", nil)
 	if err != nil {
 		return StatusResponse{}, err
 	}
@@ -65,7 +65,7 @@ func (c *Client) Enqueue(ctx context.Context, repository string, issueNumber int
 		return TaskResponse{}, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://saga/tasks", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "http://sg/tasks", bytes.NewReader(body))
 	if err != nil {
 		return TaskResponse{}, err
 	}
@@ -101,7 +101,7 @@ func (c *Client) Resume(ctx context.Context, taskID int64) error {
 }
 
 func (c *Client) postTaskAction(ctx context.Context, taskID int64, action string) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("http://saga/tasks/%d/%s", taskID, action), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("http://sg/tasks/%d/%s", taskID, action), nil)
 	if err != nil {
 		return err
 	}

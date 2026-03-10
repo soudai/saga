@@ -45,7 +45,7 @@ flowchart LR
 
 公開インターフェース:
 
-- Unix domain socket: `/run/saga/saga.sock`
+- Unix domain socket: `/run/sg/sg.sock`
 - ローカル CLI 経由で `enqueue/status/cancel/retry/resume`
 
 ### 3.2 Workflow Engine
@@ -216,8 +216,8 @@ sequenceDiagram
 `systemd` の `StateDirectory`, `RuntimeDirectory`, `LogsDirectory` を使う前提で、標準配置を次のようにする。
 
 ```text
-/var/lib/saga/
-  saga.db
+/var/lib/sg/
+  sg.db
   repos/
   worktrees/
   artifacts/
@@ -230,13 +230,13 @@ sequenceDiagram
       reviewer/
       verifier/
 
-/run/saga/
-  saga.sock
+/run/sg/
+  sg.sock
   locks/
   pids/
 
-/var/log/saga/
-  saga.log
+/var/log/sg/
+  sg.log
 ```
 
 WSL2 では上記を Linux 側ファイルシステムに置く。`/mnt/c` は IO と権限の観点から非推奨。
@@ -285,7 +285,7 @@ daemon 起動時に以下を再同期する。
 ### 8.3 ヘルスチェック
 
 - daemon は readiness を systemd に通知する
-- `/run/saga/saga.sock` の応答確認
+- `/run/sg/sg.sock` の応答確認
 - DB ロックの整合性確認
 - GitHub ポーラの最終成功時刻確認
 

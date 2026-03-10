@@ -24,23 +24,23 @@ What is implemented as tested packages but not yet wired into a full autonomous 
 ## Available commands
 
 ```bash
-saga version
-saga init
-saga enqueue <repository> <issue-number> --config /path/to/config.yaml
-saga doctor --config /path/to/config.yaml
-saga serve --config /path/to/config.yaml
-saga status --config /path/to/config.yaml
-saga cancel <task-id> --config /path/to/config.yaml
-saga retry <task-id> --config /path/to/config.yaml
-saga resume <task-id> --config /path/to/config.yaml
+sg version
+sg init
+sg enqueue <repository> <issue-number> --config /path/to/config.yaml
+sg doctor --config /path/to/config.yaml
+sg serve --config /path/to/config.yaml
+sg status --config /path/to/config.yaml
+sg cancel <task-id> --config /path/to/config.yaml
+sg retry <task-id> --config /path/to/config.yaml
+sg resume <task-id> --config /path/to/config.yaml
 ```
 
 Notes:
 
-- `saga init` interactively creates a config file with project-local or system-wide defaults
-- `saga enqueue <repository> <issue-number>` registers a queued task through the daemon control API
-- `saga serve` runs in the foreground until it receives `SIGINT` or `SIGTERM`
-- `saga status` and task actions talk to the daemon over the configured Unix socket
+- `sg init` interactively creates a config file with project-local or system-wide defaults
+- `sg enqueue <repository> <issue-number>` registers a queued task through the daemon control API
+- `sg serve` runs in the foreground until it receives `SIGINT` or `SIGTERM`
+- `sg status` and task actions talk to the daemon over the configured Unix socket
 
 ## Runtime architecture
 
@@ -99,27 +99,27 @@ make build
 Generate a config interactively:
 
 ```bash
-./bin/saga init
+./bin/sg init
 ```
 
 Or choose an explicit output path:
 
 ```bash
-./bin/saga init ./saga.local.yaml
+./bin/sg init ./sg.local.yaml
 ```
 
 The command asks for a profile and then lets you confirm or edit each path.
 
-If you prefer to create a file manually, a local config such as `./saga.local.yaml` also works:
+If you prefer to create a file manually, a local config such as `./sg.local.yaml` also works:
 
 ```yaml
 runtime:
-  state_dir: /tmp/saga/state
-  run_dir: /tmp/saga/run
-  log_dir: /tmp/saga/log
+  state_dir: /tmp/sg/state
+  run_dir: /tmp/sg/run
+  log_dir: /tmp/sg/log
 
 server:
-  socket_path: /tmp/saga/run/saga.sock
+  socket_path: /tmp/sg/run/sg.sock
 
 log:
   level: info
@@ -128,15 +128,15 @@ log:
 Run the daemon in one terminal:
 
 ```bash
-./bin/saga serve --config ./saga.local.yaml
+./bin/sg serve --config ./sg.local.yaml
 ```
 
 Query it from another terminal:
 
 ```bash
-./bin/saga enqueue soudai/saga 123 --config ./saga.local.yaml
-./bin/saga doctor --config ./saga.local.yaml
-./bin/saga status --config ./saga.local.yaml
+./bin/sg enqueue soudai/saga 123 --config ./sg.local.yaml
+./bin/sg doctor --config ./sg.local.yaml
+./bin/sg status --config ./sg.local.yaml
 ```
 
 ## Implemented building blocks
@@ -174,7 +174,7 @@ The release script builds a distributable tarball under `dist/`.
 
 Relevant operational assets:
 
-- systemd service template: [`contrib/systemd/saga.service`](./contrib/systemd/saga.service)
+- systemd service template: [`contrib/systemd/sg.service`](./contrib/systemd/sg.service)
 - systemd/WSL2 notes: [`docs/systemd-wsl2.md`](./docs/systemd-wsl2.md)
 - smoke test: [`docs/testing/smoke-test.md`](./docs/testing/smoke-test.md)
 

@@ -54,7 +54,7 @@ func newInitCommandWithOps(stdin io.Reader, stdout io.Writer, ops initFileOps) *
 
 	cmd := &cobra.Command{
 		Use:   "init [config-path]",
-		Short: "Interactively create a Saga config file",
+		Short: "Interactively create an sg config file",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runInit(stdin, stdout, args, force, ops)
@@ -158,10 +158,10 @@ func runInit(stdin io.Reader, stdout io.Writer, args []string, force bool, ops i
 	if err := writef(stdout, "Next steps:\n"); err != nil {
 		return err
 	}
-	if err := writef(stdout, "  saga doctor --config %s\n", answers.ConfigPath); err != nil {
+	if err := writef(stdout, "  sg doctor --config %s\n", answers.ConfigPath); err != nil {
 		return err
 	}
-	if err := writef(stdout, "  saga serve --config %s\n", answers.ConfigPath); err != nil {
+	if err := writef(stdout, "  sg serve --config %s\n", answers.ConfigPath); err != nil {
 		return err
 	}
 	return nil
@@ -178,21 +178,21 @@ func defaultInitAnswers(wd string, profile initProfile) initAnswers {
 	switch profile {
 	case initProfileSystem:
 		return initAnswers{
-			ConfigPath: "/etc/saga/config.yaml",
-			StateDir:   "/var/lib/saga",
-			RunDir:     "/run/saga",
-			LogDir:     "/var/log/saga",
-			SocketPath: "/run/saga/saga.sock",
+			ConfigPath: "/etc/sg/config.yaml",
+			StateDir:   "/var/lib/sg",
+			RunDir:     "/run/sg",
+			LogDir:     "/var/log/sg",
+			SocketPath: "/run/sg/sg.sock",
 			LogLevel:   "warn",
 		}
 	default:
-		root := filepath.Join(wd, ".saga")
+		root := filepath.Join(wd, ".sg")
 		return initAnswers{
 			ConfigPath: filepath.Join(root, "config.yaml"),
 			StateDir:   filepath.Join(root, "state"),
 			RunDir:     filepath.Join(root, "run"),
 			LogDir:     filepath.Join(root, "log"),
-			SocketPath: filepath.Join(root, "run", "saga.sock"),
+			SocketPath: filepath.Join(root, "run", "sg.sock"),
 			LogLevel:   "info",
 		}
 	}
