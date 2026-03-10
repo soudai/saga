@@ -34,7 +34,7 @@ func TestTaskActions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			dbPath := filepath.Join(t.TempDir(), "saga.db")
+			dbPath := filepath.Join(t.TempDir(), "sg.db")
 			sqliteStore, err := sqlite.Open(dbPath)
 			if err != nil {
 				t.Fatalf("Open() error = %v", err)
@@ -75,7 +75,7 @@ func TestEnqueueTask(t *testing.T) {
 	for _, path := range []string{"/tasks", "/tasks/"} {
 		path := path
 		t.Run(path, func(t *testing.T) {
-			dbPath := filepath.Join(t.TempDir(), "saga.db")
+			dbPath := filepath.Join(t.TempDir(), "sg.db")
 			sqliteStore, err := sqlite.Open(dbPath)
 			if err != nil {
 				t.Fatalf("Open() error = %v", err)
@@ -113,7 +113,7 @@ func TestEnqueueTask(t *testing.T) {
 func TestTaskActionErrors(t *testing.T) {
 	t.Parallel()
 
-	dbPath := filepath.Join(t.TempDir(), "saga.db")
+	dbPath := filepath.Join(t.TempDir(), "sg.db")
 	sqliteStore, err := sqlite.Open(dbPath)
 	if err != nil {
 		t.Fatalf("Open() error = %v", err)

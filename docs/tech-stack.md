@@ -61,9 +61,9 @@
 ### 4.3 実行要件
 
 - `systemd=true` な WSL2
-- `/usr/local/bin/saga` に配置可能
-- `/etc/saga/` に config と secrets を配置可能
-- `/var/lib/saga`, `/run/saga`, `/var/log/saga` に書き込み可能
+- `/usr/local/bin/sg` に配置可能
+- `/etc/sg/` に config と secrets を配置可能
+- `/var/lib/sg`, `/run/sg`, `/var/log/sg` に書き込み可能
 
 ### 4.4 リポジトリ要件
 
@@ -73,7 +73,7 @@
 
 ## 5. 推奨設定ファイル
 
-### 5.1 `/etc/saga/config.yaml`
+### 5.1 `/etc/sg/config.yaml`
 
 - daemon 全体設定
 - GitHub repositories
@@ -81,7 +81,7 @@
 - concurrency
 - poll intervals
 
-### 5.2 `/etc/saga/saga.env`
+### 5.2 `/etc/sg/sg.env`
 
 - `GITHUB_APP_ID`
 - `GITHUB_INSTALLATION_ID`
@@ -89,14 +89,14 @@
 - `OPENAI_API_KEY`
 - `CODEX_PATH`
 
-### 5.3 `.saga/`
+### 5.3 `.sg/`
 
 プロジェクトローカル override:
 
-- `.saga/workflows/*.yaml`
-- `.saga/prompts/*.md`
-- `.saga/policies/*.md`
-- `.saga/config.yaml`
+- `.sg/workflows/*.yaml`
+- `.sg/prompts/*.md`
+- `.sg/policies/*.md`
+- `.sg/config.yaml`
 
 ## 6. 運用要件
 
@@ -107,9 +107,9 @@
 - `Type=notify`
 - `Restart=on-failure`
 - `KillMode=control-group`
-- `StateDirectory=saga`
-- `RuntimeDirectory=saga`
-- `LogsDirectory=saga`
+- `StateDirectory=sg`
+- `RuntimeDirectory=sg`
+- `LogsDirectory=sg`
 
 ### 6.2 ログ
 
@@ -143,7 +143,7 @@
 ### 7.3 Smoke Test
 
 - WSL2 Ubuntu
-- `systemctl start saga`
+- `systemctl start sg`
 - Issue 検出から PR 作成まで
 
 ## 8. 採用しない技術

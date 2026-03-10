@@ -62,9 +62,9 @@
 
 | ID | 要件 |
 |---|---|
-| FR-CORE-01 | `saga` は Go 製の単一バイナリとしてビルドできること |
-| FR-CORE-02 | `saga serve` は常駐サービスとして実行できること |
-| FR-CORE-03 | `saga enqueue`, `status`, `cancel`, `retry`, `resume`, `doctor` の CLI を持つこと |
+| FR-CORE-01 | `sg` は Go 製の単一バイナリとしてビルドできること |
+| FR-CORE-02 | `sg serve` は常駐サービスとして実行できること |
+| FR-CORE-03 | `sg enqueue`, `status`, `cancel`, `retry`, `resume`, `doctor` の CLI を持つこと |
 | FR-CORE-04 | daemon は Unix domain socket でローカル CLI と通信できること |
 | FR-CORE-05 | daemon は SQLite に状態を永続化し、再起動後に復旧できること |
 
@@ -95,7 +95,7 @@
 
 | ID | 要件 |
 |---|---|
-| FR-CODEX-01 | `saga` は `Codex CLI` を外部プロセスとして起動できること |
+| FR-CODEX-01 | `sg` は `Codex CLI` を外部プロセスとして起動できること |
 | FR-CODEX-02 | stage ごとに `read-only`, `workspace-write`, `full` 相当の sandbox を切り替えられること |
 | FR-CODEX-03 | stage ごとに network access の有無を切り替えられること |
 | FR-CODEX-04 | Codex CLI の標準出力・標準エラー・終了コードを取得し、結果判定に用いること |
@@ -149,8 +149,8 @@
 | FR-OBS-01 | run ごとに `events.ndjson` を保存すること |
 | FR-OBS-02 | subagent ごとに stdout/stderr ログを保存すること |
 | FR-OBS-03 | journald に主要イベントを出力すること |
-| FR-OBS-04 | `saga status` で queue, run, worker, GitHub 同期状態を確認できること |
-| FR-OBS-05 | `saga logs` で run と worker のログを参照できること |
+| FR-OBS-04 | `sg status` で queue, run, worker, GitHub 同期状態を確認できること |
+| FR-OBS-05 | `sg logs` で run と worker のログを参照できること |
 
 ## 7. 非機能要件
 
@@ -180,7 +180,7 @@
 
 ## 8. リポジトリ側の前提条件
 
-- 自動マージ対象リポジトリは、`saga` がマージ可能な権限設定を持つこと
+- 自動マージ対象リポジトリは、`sg` がマージ可能な権限設定を持つこと
 - required review がある場合は、GitHub App に bypass 権限を与えるか、自動化対象ブランチの保護ルールを調整すること
 - CI は PR ベースで実行され、GitHub API から結果取得可能であること
 - branch naming, PR template, merge strategy を設定ファイルまたはリポジトリルールとして定義できること
@@ -189,7 +189,7 @@
 
 以下を満たしたとき v1 完了とみなす。
 
-1. `systemd` で `saga serve` が自動起動する
+1. `systemd` で `sg serve` が自動起動する
 2. 対象 Issue を自動検出して task 化できる
 3. planner, implementer, tester, reviewer, verifier のワークフローが動作する
 4. PR が自動作成される

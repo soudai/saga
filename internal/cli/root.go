@@ -24,7 +24,7 @@ func NewRootCommand(stdin io.Reader, stdout, stderr io.Writer) *cobra.Command {
 	var configPath string
 
 	cmd := &cobra.Command{
-		Use:           "saga",
+		Use:           "sg",
 		Short:         "Saga AI agent framework",
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -116,7 +116,7 @@ func newDoctorCommand(stdout, stderr io.Writer, configPath *string) *cobra.Comma
 func newServeCommand(stdout, stderr io.Writer, configPath *string) *cobra.Command {
 	return &cobra.Command{
 		Use:   "serve",
-		Short: "Run the saga daemon",
+		Short: "Run the sg daemon",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(*configPath)
 			if err != nil {

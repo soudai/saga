@@ -9,5 +9,5 @@ var (
 )
 
 func String() string {
-	return fmt.Sprintf("saga version=%s commit=%s date=%s", Version, Commit, BuildDate)
+	return fmt.Sprintf("sg version=%s commit=%s date=%s", Version, Commit, BuildDate)
 }
