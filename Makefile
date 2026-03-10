@@ -1,7 +1,7 @@
 .PHONY: build test fmt
 
 build:
-	mkdir -p bin && go build -o bin/saga ./cmd/saga
+	mkdir -p bin && go build -o bin/sg ./cmd/sg
 
 test:
 	go test ./...

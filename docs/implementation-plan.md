@@ -31,14 +31,14 @@
 作業:
 
 - Go module 初期化
-- `cmd/saga`, `internal/`, `docs/`, `test/` 構成作成
+- `cmd/sg`, `internal/`, `docs/`, `test/` 構成作成
 - `Makefile` または `justfile` 追加
 - CI のひな形追加
 
 完了条件:
 
 - `go test ./...` が空でも通る
-- `saga version` が動く
+- `sg version` が動く
 
 ### Phase 1: Runtime Foundation
 
@@ -49,15 +49,15 @@
 作業:
 
 - `cobra` で CLI 実装
-- `saga serve`
-- `saga doctor`
+- `sg serve`
+- `sg doctor`
 - config loader
 - `slog` 初期化
 - systemd readiness notify
 
 完了条件:
 
-- `systemd` なしでも `saga serve` が起動する
+- `systemd` なしでも `sg serve` が起動する
 - config 読み込みと validation が動く
 
 ### Phase 2: State & Control Plane
@@ -194,7 +194,7 @@
 
 完了条件:
 
-- `systemctl enable --now saga` で常駐できる
+- `systemctl enable --now sg` で常駐できる
 - 再起動、停止、異常終了時の挙動が確認できる
 
 ### Phase 9: Release Readiness

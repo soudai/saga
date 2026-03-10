@@ -24,23 +24,23 @@ Saga は、Linux / WSL2 上でローカル常駐 orchestration を行う Go 製 
 ## 利用可能なコマンド
 
 ```bash
-saga version
-saga init
-saga enqueue <repository> <issue-number> --config /path/to/config.yaml
-saga doctor --config /path/to/config.yaml
-saga serve --config /path/to/config.yaml
-saga status --config /path/to/config.yaml
-saga cancel <task-id> --config /path/to/config.yaml
-saga retry <task-id> --config /path/to/config.yaml
-saga resume <task-id> --config /path/to/config.yaml
+sg version
+sg init
+sg enqueue <repository> <issue-number> --config /path/to/config.yaml
+sg doctor --config /path/to/config.yaml
+sg serve --config /path/to/config.yaml
+sg status --config /path/to/config.yaml
+sg cancel <task-id> --config /path/to/config.yaml
+sg retry <task-id> --config /path/to/config.yaml
+sg resume <task-id> --config /path/to/config.yaml
 ```
 
 補足:
 
-- `saga init` は対話形式で config file を生成し、project-local / system-wide の初期値を選べます
-- `saga enqueue <repository> <issue-number>` は daemon の control API 経由で `queued` task を登録します
-- `saga serve` は `SIGINT` または `SIGTERM` を受けるまで foreground で動作します
-- `saga status` と task action は設定された Unix socket 経由で daemon に接続します
+- `sg init` は対話形式で config file を生成し、project-local / system-wide の初期値を選べます
+- `sg enqueue <repository> <issue-number>` は daemon の control API 経由で `queued` task を登録します
+- `sg serve` は `SIGINT` または `SIGTERM` を受けるまで foreground で動作します
+- `sg status` と task action は設定された Unix socket 経由で daemon に接続します
 
 ## ランタイム構成
 
@@ -99,27 +99,27 @@ make build
 まず対話形式で config を生成できます。
 
 ```bash
-./bin/saga init
+./bin/sg init
 ```
 
 出力先を明示することもできます。
 
 ```bash
-./bin/saga init ./saga.local.yaml
+./bin/sg init ./sg.local.yaml
 ```
 
 このコマンドは profile を選ばせたあと、各 path や log level を確認・編集できます。
 
-手動で書く場合は、`./saga.local.yaml` のような config でも動きます。
+手動で書く場合は、`./sg.local.yaml` のような config でも動きます。
 
 ```yaml
 runtime:
-  state_dir: /tmp/saga/state
-  run_dir: /tmp/saga/run
-  log_dir: /tmp/saga/log
+  state_dir: /tmp/sg/state
+  run_dir: /tmp/sg/run
+  log_dir: /tmp/sg/log
 
 server:
-  socket_path: /tmp/saga/run/saga.sock
+  socket_path: /tmp/sg/run/sg.sock
 
 log:
   level: info
@@ -128,15 +128,15 @@ log:
 1 つ目のターミナルで daemon を起動します。
 
 ```bash
-./bin/saga serve --config ./saga.local.yaml
+./bin/sg serve --config ./sg.local.yaml
 ```
 
 別ターミナルから確認します。
 
 ```bash
-./bin/saga enqueue soudai/saga 123 --config ./saga.local.yaml
-./bin/saga doctor --config ./saga.local.yaml
-./bin/saga status --config ./saga.local.yaml
+./bin/sg enqueue soudai/saga 123 --config ./sg.local.yaml
+./bin/sg doctor --config ./sg.local.yaml
+./bin/sg status --config ./sg.local.yaml
 ```
 
 ## 実装済み building block
@@ -174,7 +174,7 @@ release script は `dist/` 配下に配布用 tarball を生成します。
 
 関連ファイル:
 
-- systemd service template: [`contrib/systemd/saga.service`](./contrib/systemd/saga.service)
+- systemd service template: [`contrib/systemd/sg.service`](./contrib/systemd/sg.service)
 - systemd / WSL2 メモ: [`docs/systemd-wsl2.md`](./docs/systemd-wsl2.md)
 - smoke test: [`docs/testing/smoke-test.md`](./docs/testing/smoke-test.md)
 

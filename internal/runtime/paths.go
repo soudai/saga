@@ -38,5 +38,5 @@ func (p Paths) EnsureDirs() error {
 }
 
 func (p Paths) DatabasePath() string {
-	return filepath.Join(p.StateDir, "saga.db")
+	return filepath.Join(p.StateDir, "sg.db")
 }

@@ -8,7 +8,7 @@ func TestMatchesIssue(t *testing.T) {
 	selector := Selector{
 		Labels:    []string{"saga:ready"},
 		Assignees: []string{"saga-bot"},
-		Commands:  []string{"/saga run"},
+		Commands:  []string{"/sg run"},
 	}
 
 	tests := []struct {
@@ -53,7 +53,7 @@ func TestMatchesIssue(t *testing.T) {
 			issue: Issue{
 				State: "open",
 				Comments: []Comment{
-					{Body: "/saga run", Author: "soudai"},
+					{Body: "/sg run", Author: "soudai"},
 				},
 			},
 			want: true,
@@ -63,7 +63,7 @@ func TestMatchesIssue(t *testing.T) {
 			issue: Issue{
 				State: "open",
 				Comments: []Comment{
-					{Body: "/saga run", Author: "saga-bot", AuthorIsBot: true},
+					{Body: "/sg run", Author: "saga-bot", AuthorIsBot: true},
 				},
 			},
 			want: false,
@@ -72,7 +72,7 @@ func TestMatchesIssue(t *testing.T) {
 			name: "body command ignored",
 			issue: Issue{
 				State: "open",
-				Body:  "/saga run",
+				Body:  "/sg run",
 			},
 			want: false,
 		},

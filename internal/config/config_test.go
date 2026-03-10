@@ -15,7 +15,7 @@ func TestLoadDefault(t *testing.T) {
 		t.Fatalf("Load() error = %v", err)
 	}
 
-	if cfg.Server.SocketPath != "/run/saga/saga.sock" {
+	if cfg.Server.SocketPath != "/run/sg/sg.sock" {
 		t.Fatalf("socket path = %q, want default", cfg.Server.SocketPath)
 	}
 }
@@ -25,7 +25,7 @@ func TestLoadFileOverride(t *testing.T) {
 
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.yaml")
-	content := []byte("runtime:\n  state_dir: /tmp/saga-state\nserver:\n  socket_path: /tmp/saga.sock\n")
+	content := []byte("runtime:\n  state_dir: /tmp/sg-state\nserver:\n  socket_path: /tmp/sg.sock\n")
 	if err := os.WriteFile(path, content, 0o644); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
@@ -35,10 +35,10 @@ func TestLoadFileOverride(t *testing.T) {
 		t.Fatalf("Load() error = %v", err)
 	}
 
-	if cfg.Runtime.StateDir != "/tmp/saga-state" {
+	if cfg.Runtime.StateDir != "/tmp/sg-state" {
 		t.Fatalf("state dir = %q, want override", cfg.Runtime.StateDir)
 	}
-	if cfg.Server.SocketPath != "/tmp/saga.sock" {
+	if cfg.Server.SocketPath != "/tmp/sg.sock" {
 		t.Fatalf("socket path = %q, want override", cfg.Server.SocketPath)
 	}
 }
@@ -48,7 +48,7 @@ func TestLoadRejectsUnknownField(t *testing.T) {
 
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.yaml")
-	content := []byte("runtime:\n  state_dir: /tmp/saga-state\n  unknown: true\n")
+	content := []byte("runtime:\n  state_dir: /tmp/sg-state\n  unknown: true\n")
 	if err := os.WriteFile(path, content, 0o644); err != nil {
 		t.Fatalf("WriteFile() error = %v", err)
 	}

@@ -16,7 +16,7 @@ import (
 func TestStatusHandler(t *testing.T) {
 	t.Parallel()
 
-	dbPath := filepath.Join(t.TempDir(), "saga.db")
+	dbPath := filepath.Join(t.TempDir(), "sg.db")
 	sqliteStore, err := sqlite.Open(dbPath)
 	if err != nil {
 		t.Fatalf("Open() error = %v", err)

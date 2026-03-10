@@ -14,13 +14,13 @@
 
 ## 実装ステップ
 1. `Type=notify`, `Restart=on-failure`, `StateDirectory`, `RuntimeDirectory`, `LogsDirectory` を満たす unit file を追加する。
-2. `/usr/local/bin/saga` と `/etc/saga/` を前提にした install / upgrade 手順を文書化する。
+2. `/usr/local/bin/sg` と `/etc/sg/` を前提にした install / upgrade 手順を文書化する。
 3. `doctor` に systemd 有効化確認、WSL2 判定、`/mnt/c` 警告、runtime directory 書き込み確認を追加する。
 4. daemon 停止時に子プロセスを確実に終了する graceful shutdown を実装する。
 5. journald と artifact log の両方に主要イベントが出ることを smoke test で確認する。
 
 ## 完了条件
-- `systemctl enable --now saga` で常駐できる
+- `systemctl enable --now sg` で常駐できる
 - 再起動、停止、異常終了時の挙動を確認できる
 
 ## 参照

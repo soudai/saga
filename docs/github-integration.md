@@ -74,7 +74,7 @@ v1 では以下のいずれかで task 化する。
 
 1. `saga:ready` ラベルが付いている
 2. `assignee == saga-bot` である
-3. `/saga run` コメントが追加された
+3. `/sg run` コメントが追加された
 
 追加条件:
 
@@ -214,11 +214,11 @@ fix loop 発生時:
 
 v1 でサポートするコマンド案:
 
-- `/saga run`
-- `/saga retry`
-- `/saga cancel`
-- `/saga status`
-- `/saga resume`
+- `/sg run`
+- `/sg retry`
+- `/sg cancel`
+- `/sg status`
+- `/sg resume`
 
 実装方針:
 
@@ -279,7 +279,7 @@ github:
     mode: app
     app_id: 123456
     installation_id: 987654
-    private_key_file: /etc/saga/github-app.pem
+    private_key_file: /etc/sg/github-app.pem
 
   repositories:
     - owner: example
@@ -288,7 +288,7 @@ github:
       selectors:
         labels: ["saga:ready"]
         assignees: ["saga-bot"]
-        commands: ["/saga run"]
+        commands: ["/sg run"]
       pr:
         draft: true
         merge_method: squash
