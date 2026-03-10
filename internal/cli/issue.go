@@ -44,12 +44,12 @@ func newIssueCommandWithDeps(stdin io.Reader, stdout io.Writer, configPath *stri
 		Use:   "issue",
 		Short: "Render or create instruction issues",
 	}
-	cmd.AddCommand(newIssueDraftCommand(stdin, stdout, deps))
+	cmd.AddCommand(newIssueDraftCommand(stdin, stdout))
 	cmd.AddCommand(newIssueCreateCommand(stdin, stdout, configPath, deps))
 	return cmd
 }
 
-func newIssueDraftCommand(stdin io.Reader, stdout io.Writer, deps issueCommandDeps) *cobra.Command {
+func newIssueDraftCommand(stdin io.Reader, stdout io.Writer) *cobra.Command {
 	var fromFile string
 	var title string
 

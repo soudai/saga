@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -95,7 +96,7 @@ func TestIssueCommandRejectsInvalidRepository(t *testing.T) {
 	path := writeIssueSource(t, "Implement auth support")
 
 	configPath := ""
-	cmd := newIssueCommandWithDeps(strings.NewReader(""), ioDiscard{}, &configPath, issueCommandDeps{})
+	cmd := newIssueCommandWithDeps(strings.NewReader(""), io.Discard, &configPath, issueCommandDeps{})
 	cmd.SetArgs([]string{"draft", "invalid", "--from-file", path})
 
 	err := cmd.Execute()
@@ -125,10 +126,4 @@ func (s *stubIssueWriter) Create(_ context.Context, repository string, req sagag
 	s.repository = repository
 	s.request = req
 	return s.issue, s.err
-}
-
-type ioDiscard struct{}
-
-func (ioDiscard) Write(p []byte) (int, error) {
-	return len(p), nil
 }

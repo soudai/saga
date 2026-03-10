@@ -23,6 +23,15 @@ func TestExtractTitleFallsBackToFirstNonEmptyLine(t *testing.T) {
 	}
 }
 
+func TestExtractTitlePreservesLeadingHashInHeadingText(t *testing.T) {
+	t.Parallel()
+
+	got := ExtractTitle("## #HashTagTitle")
+	if got != "#HashTagTitle" {
+		t.Fatalf("ExtractTitle() = %q, want %q", got, "#HashTagTitle")
+	}
+}
+
 func TestRenderWrapsBriefInInstructionTemplate(t *testing.T) {
 	t.Parallel()
 

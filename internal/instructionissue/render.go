@@ -9,6 +9,7 @@ import (
 const markerPrefix = "<!-- sg:instruction-issue"
 
 var markdownHeadingPattern = regexp.MustCompile(`^#{1,3}\s+\S`)
+var markdownHeadingCapturePattern = regexp.MustCompile(`^#{1,3}\s+(.+)$`)
 
 type RenderOptions struct {
 	Repository string
@@ -26,8 +27,8 @@ func ExtractTitle(content string) string {
 		if trimmed == "" {
 			continue
 		}
-		if markdownHeadingPattern.MatchString(trimmed) {
-			return strings.TrimSpace(strings.TrimLeft(trimmed, "# "))
+		if matches := markdownHeadingCapturePattern.FindStringSubmatch(trimmed); len(matches) == 2 {
+			return strings.TrimSpace(matches[1])
 		}
 		return trimmed
 	}
