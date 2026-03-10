@@ -36,6 +36,7 @@ func NewRootCommand(stdin io.Reader, stdout, stderr io.Writer) *cobra.Command {
 	cmd.PersistentFlags().StringVar(&configPath, "config", "", "path to config file")
 
 	cmd.AddCommand(newInitCommand(stdin, stdout))
+	cmd.AddCommand(newIssueCommand(stdin, stdout, &configPath))
 	cmd.AddCommand(newEnqueueCommand(stdout, &configPath))
 	cmd.AddCommand(newVersionCommand(stdout))
 	cmd.AddCommand(newDoctorCommand(stdout, stderr, &configPath))
